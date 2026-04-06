@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title> cutie🎀 </title>
+<title>💗 Her Dashboard</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -24,9 +24,6 @@ body {
   height: 100%;
   background: #ff8fab;
 }
-input {
-  width: 60px;
-}
 </style>
 </head>
 
@@ -40,11 +37,9 @@ input {
 <div class="bar"><div id="overallBar" class="fill"></div></div>
 <p id="overallText"></p>
 
-<div id="adminPanel"></div>
-
 <script>
-// 🔥 YOUR FIREBASE CONFIG
 
+// 🔥 YOUR REAL CONFIG (replace this)
 const firebaseConfig = {
   apiKey: "AIzaSyCsv34rRwtD35qcTl8RMeBwFF5F_azkMg8",
   authDomain: "rating-bar-24a81.firebaseapp.com",
@@ -55,13 +50,6 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-
-db.ref("bars").on("value", snap => {
-  const data = snap.val();
-  console.log(data); // 👈 add this for debug
-});
-
-const isAdmin = new URLSearchParams(location.search).get("key") === "hersecret123";
 
 const labels = {
   trust: "Trust 🤍",
@@ -74,10 +62,12 @@ const labels = {
 
 db.ref("bars").on("value", snap => {
   const data = snap.val();
+
+  console.log("DATA:", data); // 🔥 debug
+
   if (!data) return;
 
   let html = "";
-  let adminHTML = "";
   let total = 0, count = 0;
 
   for (let key in data) {
@@ -88,10 +78,6 @@ db.ref("bars").on("value", snap => {
       <div>${labels[key]} (${data[key]}%)</div>
       <div class="bar"><div class="fill" style="width:${data[key]}%"></div></div>
     `;
-
-    if (isAdmin) {
-      adminHTML += `<input id="${key}" type="number" value="${data[key]}" min="0" max="100"><br>`;
-    }
   }
 
   document.getElementById("bars").innerHTML = html;
@@ -99,21 +85,8 @@ db.ref("bars").on("value", snap => {
   let overall = Math.round(total / count);
   document.getElementById("overallBar").style.width = overall + "%";
   document.getElementById("overallText").innerText = overall + "%";
-
-  if (isAdmin) {
-    adminHTML += `<button onclick="update()">Update 💗</button>`;
-    document.getElementById("adminPanel").innerHTML = adminHTML;
-  }
 });
 
-function update() {
-  let updates = {};
-  for (let key in labels) {
-    let val = document.getElementById(key).value;
-    updates[key] = Number(val);
-  }
-  db.ref("bars").set(updates);
-}
 </script>
 
 </body>
