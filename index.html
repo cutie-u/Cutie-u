@@ -4,10 +4,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>💗 Her Dashboard</title>
 
-<!-- Firebase v8 -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
 <style>
 body {
   font-family: sans-serif;
@@ -25,6 +21,9 @@ body {
   height: 100%;
   background: #ff8fab;
 }
+input {
+  width: 60px;
+}
 </style>
 </head>
 
@@ -32,30 +31,25 @@ body {
 
 <h2>💗 Her Dashboard</h2>
 
-<div id="bars">Loading...</div>
+<div id="bars"></div>
 
 <h3>Overall 💖</h3>
 <div class="bar"><div id="overallBar" class="fill"></div></div>
 <p id="overallText"></p>
 
+<div id="admin" style="display:none;"></div>
+
 <script>
 
-// 🔥 YOUR FIREBASE CONFIG (FINAL CORRECT)
-const firebaseConfig = {
-  apiKey: "AIzaSyCsv34rRwtD35qcTl8RMeBwFF5F_azkMg8",
-  authDomain: "rating-bar-24a81.firebaseapp.com",
-  databaseURL: "https://rating-bar-24a81-default-rtdb.firebaseio.com",
-  projectId: "rating-bar-24a81",
-  storageBucket: "rating-bar-24a81.firebasestorage.app",
-  messagingSenderId: "1017485664370",
-  appId: "1:1017485664370:web:a0b43f4426238a61ce22eb"
+let data = JSON.parse(localStorage.getItem("bars")) || {
+  trust: 50,
+  mood: 50,
+  love: 50,
+  angry: 20,
+  miss: 40,
+  freaky: 30
 };
 
-// INIT
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-// LABELS
 const labels = {
   trust: "Trust 🤍",
   mood: "Mood 😊",
@@ -65,19 +59,12 @@ const labels = {
   freaky: "Freaky 😏"
 };
 
-// 🔥 LOAD DATA (WORKING METHOD)
-db.ref("bars").once("value", function(snapshot) {
+const isAdmin = new URLSearchParams(location.search).get("key") === "hersecret123";
 
-  const data = snapshot.val();
-
-  if (!data) {
-    document.getElementById("bars").innerHTML = "No data found ❌";
-    return;
-  }
-
+function render() {
   let html = "";
-  let total = 0;
-  let count = 0;
+  let adminHTML = "";
+  let total = 0, count = 0;
 
   for (let key in data) {
     total += data[key];
@@ -85,10 +72,12 @@ db.ref("bars").once("value", function(snapshot) {
 
     html += `
       <div>${labels[key]} (${data[key]}%)</div>
-      <div class="bar">
-        <div class="fill" style="width:${data[key]}%"></div>
-      </div>
+      <div class="bar"><div class="fill" style="width:${data[key]}%"></div></div>
     `;
+
+    if (isAdmin) {
+      adminHTML += `<input id="${key}" type="number" value="${data[key]}"><br>`;
+    }
   }
 
   document.getElementById("bars").innerHTML = html;
@@ -97,12 +86,22 @@ db.ref("bars").once("value", function(snapshot) {
   document.getElementById("overallBar").style.width = overall + "%";
   document.getElementById("overallText").innerText = overall + "%";
 
-}, function(error) {
+  if (isAdmin) {
+    adminHTML += `<button onclick="update()">Update 💗</button>`;
+    document.getElementById("admin").innerHTML = adminHTML;
+    document.getElementById("admin").style.display = "block";
+  }
+}
 
-  document.getElementById("bars").innerHTML = "Error loading ❌";
-  console.log(error);
+function update() {
+  for (let key in data) {
+    data[key] = Number(document.getElementById(key).value);
+  }
+  localStorage.setItem("bars", JSON.stringify(data));
+  render();
+}
 
-});
+render();
 
 </script>
 
