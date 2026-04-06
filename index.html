@@ -38,16 +38,16 @@ body {
 <p id="overallText"></p>
 
 <script>
-
-// 🔥 YOUR REAL CONFIG (replace this)
 const firebaseConfig = {
   apiKey: "AIzaSyCsv34rRwtD35qcTl8RMeBwFF5F_azkMg8",
   authDomain: "rating-bar-24a81.firebaseapp.com",
+  databaseURL: "https://rating-bar-24a81-default-rtdb.firebaseio.com",
   projectId: "rating-bar-24a81",
   storageBucket: "rating-bar-24a81.firebasestorage.app",
   messagingSenderId: "1017485664370",
   appId: "1:1017485664370:web:a0b43f4426238a61ce22eb"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -60,12 +60,15 @@ const labels = {
   freaky: "Freaky 😏"
 };
 
-db.ref("bars").on("value", snap => {
+// 🔥 FORCE LOAD DATA
+db.ref("bars").once("value").then((snap) => {
   const data = snap.val();
+  console.log("DATA:", data);
 
-  console.log("DATA:", data); // 🔥 debug
-
-  if (!data) return;
+  if (!data) {
+    document.body.innerHTML += "<p>No data found</p>";
+    return;
+  }
 
   let html = "";
   let total = 0, count = 0;
@@ -86,6 +89,7 @@ db.ref("bars").on("value", snap => {
   document.getElementById("overallBar").style.width = overall + "%";
   document.getElementById("overallText").innerText = overall + "%";
 });
+
 
 </script>
 
