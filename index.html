@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>💗 Her Dashboard</title>
 
-<!-- ✅ Firebase v8 (IMPORTANT) -->
+<!-- Firebase v8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -15,19 +15,12 @@ body {
   text-align: center;
   padding: 20px;
 }
-
-h2 {
-  color: #ff6f91;
-}
-
 .bar {
   background: #ffd1dc;
   border-radius: 20px;
   margin: 8px 0;
   height: 20px;
-  overflow: hidden;
 }
-
 .fill {
   height: 100%;
   background: #ff8fab;
@@ -39,17 +32,15 @@ h2 {
 
 <h2>💗 Her Dashboard</h2>
 
-<div id="bars"></div>
+<div id="bars">Loading...</div>
 
 <h3>Overall 💖</h3>
-<div class="bar">
-  <div id="overallBar" class="fill"></div>
-</div>
-<p id="overallText">Loading...</p>
+<div class="bar"><div id="overallBar" class="fill"></div></div>
+<p id="overallText"></p>
 
 <script>
 
-// 🔥 YOUR FIREBASE CONFIG (FIXED)
+// 🔥 YOUR FIREBASE CONFIG (FINAL CORRECT)
 const firebaseConfig = {
   apiKey: "AIzaSyCsv34rRwtD35qcTl8RMeBwFF5F_azkMg8",
   authDomain: "rating-bar-24a81.firebaseapp.com",
@@ -60,11 +51,11 @@ const firebaseConfig = {
   appId: "1:1017485664370:web:a0b43f4426238a61ce22eb"
 };
 
-// ✅ INIT
+// INIT
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Labels
+// LABELS
 const labels = {
   trust: "Trust 🤍",
   mood: "Mood 😊",
@@ -74,12 +65,13 @@ const labels = {
   freaky: "Freaky 😏"
 };
 
-// 🔥 FETCH DATA
-db.ref("bars").once("value").then((snap) => {
-  const data = snap.val();
+// 🔥 LOAD DATA (WORKING METHOD)
+db.ref("bars").once("value", function(snapshot) {
+
+  const data = snapshot.val();
 
   if (!data) {
-    document.getElementById("overallText").innerText = "No data found";
+    document.getElementById("bars").innerHTML = "No data found ❌";
     return;
   }
 
@@ -104,6 +96,12 @@ db.ref("bars").once("value").then((snap) => {
   let overall = Math.round(total / count);
   document.getElementById("overallBar").style.width = overall + "%";
   document.getElementById("overallText").innerText = overall + "%";
+
+}, function(error) {
+
+  document.getElementById("bars").innerHTML = "Error loading ❌";
+  console.log(error);
+
 });
 
 </script>
