@@ -1,105 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trust Meter 💗</title>
+<title>💗 Her Dashboard</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <style>
 body {
-  margin: 0;
-  font-family: 'Poppins', sans-serif;
+  font-family: sans-serif;
   background: #ffe4ec;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-
-.container {
-  background: #fff0f5;
-  padding: 25px;
-  border-radius: 20px;
-  width: 300px;
   text-align: center;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  padding: 20px;
 }
-
-h1 {
-  color: #ff6f91;
-}
-
 .bar {
   background: #ffd1dc;
   border-radius: 20px;
-  overflow: hidden;
-  height: 25px;
-  margin: 15px 0;
+  margin: 8px 0;
+  height: 20px;
 }
-
 .fill {
   height: 100%;
-  width: 50%;
   background: #ff8fab;
-  transition: 0.4s;
 }
-
-input, button {
-  margin-top: 10px;
-  padding: 8px;
-  border-radius: 10px;
-  border: none;
-}
-
-button {
-  background: #ff8fab;
-  color: white;
-  cursor: pointer;
+input {
+  width: 60px;
 }
 </style>
-
 </head>
 
 <body>
 
-<div class="container">
-  <h1>💗 Trust Level</h1>
+<h2>💗 Her Dashboard</h2>
 
-  <div class="bar">
-    <div id="fill" class="fill"></div>
-  </div>
+<div id="bars"></div>
 
-  <p id="percent">50%</p>
+<h3>Overall 💖</h3>
+<div class="bar"><div id="overallBar" class="fill"></div></div>
+<p id="overallText"></p>
 
-  <!-- Admin Panel -->
-  <div id="adminPanel" style="display:none;">
-    <input type="number" id="input" placeholder="Set % (0-100)">
-    <button onclick="updateTrust()">Update</button>
-  </div>
-</div>
+<div id="adminPanel"></div>
 
 <script>
-let trust = localStorage.getItem("trust") || 50;
+// 🔥 YOUR FIREBASE CONFIG
 
-function render() {
-  document.getElementById("fill").style.width = trust + "%";
-  document.getElementById("percent").innerText = trust + "%";
-}
-render();
+const firebaseConfig = {
+  apiKey: "AIzaSyCsv34rRwtD35qcTl8RMeBwFF5F_azkMg8",
+  authDomain: "rating-bar-24a81.firebaseapp.com",
+  projectId: "rating-bar-24a81",
+  storageBucket: "rating-bar-24a81.firebasestorage.app",
+  messagingSenderId: "1017485664370",
+  appId: "1:1017485664370:web:a0b43f4426238a61ce22eb"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-// Admin mode via secret key
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get("key") === "hersecret123") {
-  document.getElementById("adminPanel").style.display = "block";
-}
+const isAdmin = new URLSearchParams(location.search).get("key") === "hersecret123";
 
-function updateTrust() {
-  let val = document.getElementById("input").value;
-  if (val >= 0 && val <= 100) {
-    trust = val;
-    localStorage.setItem("trust", trust);
-    render();
+const labels = {
+  trust: "Trust 🤍",
+  mood: "Mood 😊",
+  love: "Love 💕",
+  angry: "Angry 😤",
+  miss: "Miss 🥺",
+  freaky: "Freaky 😏"
+};
+
+db.ref("bars").on("value", snap => {
+  const data = snap.val();
+  if (!data) return;
+
+  let html = "";
+  let adminHTML = "";
+  let total = 0, count = 0;
+
+  for (let key in data) {
+    total += data[key];
+    count++;
+
+    html += `
+      <div>${labels[key]} (${data[key]}%)</div>
+      <div class="bar"><div class="fill" style="width:${data[key]}%"></div></div>
+    `;
+
+    if (isAdmin) {
+      adminHTML += `<input id="${key}" type="number" value="${data[key]}" min="0" max="100"><br>`;
+    }
   }
+
+  document.getElementById("bars").innerHTML = html;
+
+  let overall = Math.round(total / count);
+  document.getElementById("overallBar").style.width = overall + "%";
+  document.getElementById("overallText").innerText = overall + "%";
+
+  if (isAdmin) {
+    adminHTML += `<button onclick="update()">Update 💗</button>`;
+    document.getElementById("adminPanel").innerHTML = adminHTML;
+  }
+});
+
+function update() {
+  let updates = {};
+  for (let key in labels) {
+    let val = document.getElementById(key).value;
+    updates[key] = Number(val);
+  }
+  db.ref("bars").set(updates);
 }
 </script>
 
