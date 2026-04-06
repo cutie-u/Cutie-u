@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>💗 Her Dashboard</title>
+<title> cutie🎀 </title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -55,6 +55,11 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+
+db.ref("bars").on("value", snap => {
+  const data = snap.val();
+  console.log(data); // 👈 add this for debug
+});
 
 const isAdmin = new URLSearchParams(location.search).get("key") === "hersecret123";
 
