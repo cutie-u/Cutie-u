@@ -63,7 +63,6 @@ body {
   background: #ff8fab;
 }
 
-/* Inputs */
 input, textarea {
   width: 80%;
   margin: 5px;
@@ -82,6 +81,13 @@ button {
 
 .hidden {
   display: none;
+}
+
+.memory-card {
+  background:#fff0f5;
+  padding:10px;
+  margin:10px;
+  border-radius:10px;
 }
 </style>
 </head>
@@ -111,17 +117,17 @@ button {
   <h3>Overall 💖</h3>
   <div class="bar"><div id="overallBar" class="fill"></div></div>
   <p id="overallText"></p>
-
-  <p id="messageText"></p>
-  <p id="lastUpdated"></p>
 </div>
 
 <!-- MEMORIES -->
 <div id="memories" class="hidden">
   <h2>📸 Memories</h2>
-  <textarea id="memoryInput"></textarea><br>
-  <button onclick="saveMemory()">Save</button>
-  <p id="memoryList"></p>
+
+  <input type="file" id="imgInput" accept="image/*"><br>
+  <textarea id="memoryNote" placeholder="Write something..."></textarea><br>
+  <button onclick="saveMemory()">Save 💗</button>
+
+  <div id="memoryList"></div>
 </div>
 
 <!-- PLANS -->
@@ -129,15 +135,15 @@ button {
   <h2>📝 Plans</h2>
   <textarea id="planInput"></textarea><br>
   <button onclick="savePlan()">Add</button>
-  <p id="planList"></p>
+  <div id="planList"></div>
 </div>
 
 <!-- MUSIC -->
 <div id="music" class="hidden">
   <h2>🎵 Music</h2>
-  <textarea id="musicInput" placeholder="Paste song link..."></textarea><br>
+  <textarea id="musicInput" placeholder="Paste link"></textarea><br>
   <button onclick="saveMusic()">Add</button>
-  <p id="musicList"></p>
+  <div id="musicList"></div>
 </div>
 
 </div>
@@ -148,9 +154,6 @@ button {
 let data = JSON.parse(localStorage.getItem("bars")) || {
   trust: 50, mood: 50, love: 50, angry: 20, miss: 40, freaky: 30
 };
-
-let message = localStorage.getItem("message") || "";
-let lastUpdated = localStorage.getItem("time") || "Never";
 
 let memories = JSON.parse(localStorage.getItem("memories")) || [];
 let plans = JSON.parse(localStorage.getItem("plans")) || [];
@@ -207,31 +210,79 @@ function render() {
   document.getElementById("overallBar").style.width = overall + "%";
   document.getElementById("overallText").innerText = overall + "%";
 
-  document.getElementById("messageText").innerText = message;
-  document.getElementById("lastUpdated").innerText = lastUpdated;
-
-  document.getElementById("memoryList").innerHTML = memories.join("<br>");
-  document.getElementById("planList").innerHTML = plans.join("<br>");
-  document.getElementById("musicList").innerHTML = music.join("<br>");
+  renderMemories();
+  renderPlans();
+  renderMusic();
 }
 
-// SAVE FUNCTIONS
+// MEMORIES
 function saveMemory() {
-  memories.push(document.getElementById("memoryInput").value);
-  localStorage.setItem("memories", JSON.stringify(memories));
-  render();
+  let file = document.getElementById("imgInput").files[0];
+  let note = document.getElementById("memoryNote").value;
+
+  if (!file) {
+    alert("Select image!");
+    return;
+  }
+
+  let reader = new FileReader();
+
+  reader.onload = function(e) {
+    let now = new Date().toLocaleString();
+
+    let memory = {
+      img: e.target.result,
+      note: note,
+      time: now
+    };
+
+    memories.unshift(memory);
+    localStorage.setItem("memories", JSON.stringify(memories));
+
+    renderMemories();
+  };
+
+  reader.readAsDataURL(file);
 }
 
+function renderMemories() {
+  let html = "";
+
+  memories.forEach(m => {
+    html += `
+      <div class="memory-card">
+        <img src="${m.img}" style="width:100%;border-radius:10px;"><br>
+        <b>${m.note || ""}</b><br>
+        <small>${m.time}</small>
+      </div>
+    `;
+  });
+
+  document.getElementById("memoryList").innerHTML = html;
+}
+
+// PLANS
 function savePlan() {
-  plans.push(document.getElementById("planInput").value);
+  let val = document.getElementById("planInput").value;
+  plans.push(val);
   localStorage.setItem("plans", JSON.stringify(plans));
-  render();
+  renderPlans();
 }
 
+function renderPlans() {
+  document.getElementById("planList").innerHTML = plans.join("<br>");
+}
+
+// MUSIC
 function saveMusic() {
-  music.push(document.getElementById("musicInput").value);
+  let val = document.getElementById("musicInput").value;
+  music.push(val);
   localStorage.setItem("music", JSON.stringify(music));
-  render();
+  renderMusic();
+}
+
+function renderMusic() {
+  document.getElementById("musicList").innerHTML = music.join("<br>");
 }
 
 render();
