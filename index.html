@@ -5,61 +5,112 @@
 <title>💗 Relationship OS</title>
 
 <style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.25s ease;
+}
+
 body {
-  font-family: -apple-system, sans-serif;
   margin: 0;
+  font-family: -apple-system, sans-serif;
   background: linear-gradient(135deg,#ffe4ec,#ffd6e0);
-  color: #333;
+  overflow-x: hidden;
 }
 
-/* glass card */
-.card {
-  backdrop-filter: blur(12px);
-  background: rgba(255,255,255,0.4);
-  border-radius: 20px;
-  padding: 15px;
-  margin: 15px 0;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-}
-
-/* top */
+/* TOP */
 .topbar {
   display:flex;
   justify-content:space-between;
   padding:15px;
-  font-size:18px;
+  font-weight:600;
 }
 
-/* bars */
-.bar {
+/* SIDEBAR */
+.sidebar {
+  position: fixed;
+  right:-260px;
+  top:0;
+  width:250px;
+  height:100%;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(20px);
+  padding:20px;
+  transition:0.35s;
+}
+.sidebar.active { right:0; }
+
+/* CONTAINER */
+.container { padding:15px; }
+
+/* SECTIONS */
+.section {
+  transform: translateX(100%);
+  opacity:0;
+  position:absolute;
+  width:100%;
+}
+.section.active {
+  transform: translateX(0);
+  opacity:1;
+  position:relative;
+}
+
+/* CARD */
+.card {
   background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(15px);
   border-radius:20px;
-  height:18px;
+  padding:15px;
+  margin:12px 0;
+  box-shadow:0 10px 30px rgba(0,0,0,0.08);
 }
 
+/* BAR */
+.bar {
+  background: rgba(255,255,255,0.6);
+  height:16px;
+  border-radius:20px;
+}
 .fill {
   height:100%;
   border-radius:20px;
-  background: linear-gradient(90deg,#ff8fab,#ff5d8f);
-  transition:0.5s;
+  background: linear-gradient(90deg,#ff8fab,#ff4d88);
 }
 
-/* buttons */
+/* BUTTON */
 button {
-  background: linear-gradient(135deg,#ff8fab,#ff5d8f);
+  background: linear-gradient(135deg,#ff8fab,#ff4d88);
   border:none;
-  padding:10px 15px;
-  border-radius:12px;
+  padding:10px;
+  border-radius:14px;
   color:white;
 }
 
-/* inputs */
-input,textarea {
-  width:90%;
+/* INPUT */
+input, textarea {
+  width:100%;
   padding:10px;
-  border:none;
   border-radius:12px;
-  margin:5px;
+  border:none;
+  margin:5px 0;
+}
+
+/* CHAT */
+.chat {
+  max-width:70%;
+  padding:10px;
+  border-radius:15px;
+  margin:6px;
+}
+.me { background:#ff8fab;color:white;margin-left:auto; }
+.other { background:white; }
+
+/* MUSIC */
+iframe {
+  border-radius:15px;
+  width:100%;
+  height:200px;
 }
 </style>
 </head>
@@ -67,105 +118,91 @@ input,textarea {
 <body>
 
 <div class="topbar">
-  <h3>💗</h3>
-  <div class="menu" onclick="toggleMenu()">⋮</div>
+  <div>💗</div>
+  <div onclick="toggleMenu()">⋮</div>
 </div>
 
 <div class="sidebar" id="sidebar">
-  <div onclick="show('dashboard')">💗 Dashboard</div>
-  <div onclick="show('chat')">💬 Chat</div>
-  <div onclick="show('tasks')">🎯 Tasks</div>
-  <div onclick="show('memories')">📸 Memories</div>
-  <div onclick="show('music')">🎵 Music</div>
+  <div onclick="show('dashboard')">Dashboard</div>
+  <div onclick="show('chat')">Chat</div>
+  <div onclick="show('tasks')">Tasks</div>
+  <div onclick="show('memories')">Memories</div>
+  <div onclick="show('music')">Music</div>
 </div>
 
 <div class="container">
 
-<!-- DASHBOARD -->
-<div id="dashboard">
+<div id="dashboard" class="section active">
   <h2 id="userTitle"></h2>
   <div id="bars"></div>
-
-  <h3>Overall 💖</h3>
   <div class="bar"><div id="overallBar" class="fill"></div></div>
-  <p id="overallText"></p>
-
   <p id="reaction"></p>
 </div>
 
-<!-- CHAT -->
-<div id="chat" class="hidden">
-  <h2>💬 Chat</h2>
+<div id="chat" class="section">
   <div id="chatBox"></div>
   <input id="chatInput">
   <button onclick="sendMsg()">Send</button>
 </div>
 
-<!-- TASKS -->
-<div id="tasks" class="hidden">
-  <h2>🎯 Tasks</h2>
+<div id="tasks" class="section">
   <input id="taskInput">
   <button onclick="addTask()">Add</button>
   <div id="taskList"></div>
 </div>
 
-<!-- MEMORIES -->
-function renderMemories() {
-  let html = "";
+<div id="memories" class="section">
+  <input type="file" id="imgInput">
+  <textarea id="noteInput"></textarea>
+  <button onclick="saveMemory()">Save</button>
+  <div id="memoryList"></div>
+</div>
 
-  appData.memories.forEach(m => {
-    html += `
-    <div class="card">
-      <img src="${m.img}" style="width:100%;border-radius:15px;">
-      <p style="margin:8px 0">${m.note}</p>
-      <small>${m.time}</small>
-    </div>`;
-  });
-
-  document.getElementById("memoryList").innerHTML = html;
-}
-
-<!-- MUSIC -->
-<div id="music" class="hidden">
-  <h2>🎵 Music</h2>
-
-  <div class="card">
-    <input id="musicInput" placeholder="Paste YouTube link or playlist">
-    <button onclick="addMusic()">Add</button>
-  </div>
-
+<div id="music" class="section">
+  <input id="musicInput">
+  <button onclick="addMusic()">Add</button>
   <div id="musicList"></div>
+</div>
+
 </div>
 
 <script>
 
-// USER
-let user = new URLSearchParams(location.search).get("user") || "you";
+// HAPTIC
+function haptic(type="light"){
+  if(navigator.vibrate){
+    if(type==="heavy") navigator.vibrate(30);
+    else navigator.vibrate(10);
+  }
+}
 
-// STORAGE
-let appData = JSON.parse(localStorage.getItem("appData")) || {
+// USER
+let user=new URLSearchParams(location.search).get("user")||"you";
+
+// DATA
+let appData=JSON.parse(localStorage.getItem("appData"))||{
   you:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
   her:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
-  chat:[], tasks:[], memories:[], music:[]
+  chat:[],tasks:[],memories:[],music:[]
 };
 
-let data = appData[user];
+let data=appData[user];
 
-const labels = {
-  trust:"Trust 🤍", mood:"Mood 😊", love:"Love 💕",
-  angry:"Angry 😤", miss:"Miss 🥺", freaky:"Freaky 😏"
+const labels={
+  trust:"Trust",mood:"Mood",love:"Love",
+  angry:"Angry",miss:"Miss",freaky:"Freaky"
 };
 
 // MENU
 function toggleMenu(){
+  haptic();
   document.getElementById("sidebar").classList.toggle("active");
 }
 
 function show(id){
-  ["dashboard","chat","tasks","memories","music"].forEach(s=>{
-    document.getElementById(s).classList.add("hidden");
-  });
-  document.getElementById(id).classList.remove("hidden");
+  haptic();
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  setTimeout(()=>document.getElementById(id).classList.add("active"),100);
   toggleMenu();
 }
 
@@ -178,42 +215,36 @@ function save(){
 
 // DASHBOARD
 function renderDashboard(){
-  document.getElementById("userTitle").innerText = user.toUpperCase();
+  document.getElementById("userTitle").innerText=user;
 
   let html="",total=0,count=0;
-
   for(let k in data){
-    total+=data[k]; count++;
-    html+=`<div>${labels[k]} (${data[k]}%)</div>
+    total+=data[k];count++;
+    html+=`<div>${labels[k]} ${data[k]}%</div>
     <div class="bar"><div class="fill" style="width:${data[k]}%"></div></div>`;
   }
 
   document.getElementById("bars").innerHTML=html;
+  document.getElementById("overallBar").style.width=(total/count)+"%";
 
-  let overall=Math.round(total/count);
-  document.getElementById("overallBar").style.width=overall+"%";
-  document.getElementById("overallText").innerText=overall+"%";
-
-  // SMART REACTION
   let r="";
   if(data.angry>70) r="You messed up 😶";
   else if(data.love>70) r="Good job 💗";
-  else if(data.miss>60) r="She misses you 🥺";
-
   document.getElementById("reaction").innerText=r;
 }
 
 // CHAT
 function sendMsg(){
-  let text=document.getElementById("chatInput").value;
-  appData.chat.push({user,text,time:new Date().toLocaleTimeString()});
+  haptic("heavy");
+  let t=document.getElementById("chatInput").value;
+  appData.chat.push({user,text:t,time:new Date().toLocaleTimeString()});
   save();
 }
 
 function renderChat(){
   let html="";
   appData.chat.forEach(m=>{
-    html+=`<div style="text-align:${m.user===user?'right':'left'}">
+    html+=`<div class="chat ${m.user===user?'me':'other'}">
     ${m.text}<br><small>${m.time}</small></div>`;
   });
   document.getElementById("chatBox").innerHTML=html;
@@ -221,12 +252,14 @@ function renderChat(){
 
 // TASKS
 function addTask(){
+  haptic();
   let t=document.getElementById("taskInput").value;
   appData.tasks.push({text:t,done:false});
   save();
 }
 
 function toggleTask(i){
+  haptic("heavy");
   let t=appData.tasks[i];
   t.done=!t.done;
   if(t.done) data.trust=Math.min(100,data.trust+5);
@@ -244,11 +277,12 @@ function renderTasks(){
 
 // MEMORIES
 function saveMemory(){
+  haptic("heavy");
   let file=document.getElementById("imgInput").files[0];
   let note=document.getElementById("noteInput").value;
 
   let reader=new FileReader();
-  reader.onload=function(e){
+  reader.onload=e=>{
     appData.memories.unshift({
       img:e.target.result,
       note,
@@ -261,69 +295,48 @@ function saveMemory(){
 }
 
 function renderMemories(){
-  let sorted=[...appData.memories].sort((a,b)=>b.pinned-a.pinned);
-
   let html="";
-  sorted.forEach((m,i)=>{
+  appData.memories.forEach((m,i)=>{
     html+=`
     <div class="card">
       <img src="${m.img}" style="width:100%">
-      <b>${m.note}</b><br>
-      <small>${m.time}</small><br>
+      <p>${m.note}</p>
+      <small>${m.time}</small>
       <button onclick="togglePin(${i})">📌</button>
     </div>`;
   });
-
   document.getElementById("memoryList").innerHTML=html;
 }
 
 function togglePin(i){
+  haptic();
   appData.memories[i].pinned=!appData.memories[i].pinned;
   save();
 }
 
 // MUSIC
 function addMusic(){
-  let link=document.getElementById("musicInput").value;
-  appData.music.push(link);
+  haptic();
+  let l=document.getElementById("musicInput").value;
+  appData.music.push(l);
   save();
 }
-function renderMusic() {
-  let html = "";
 
-  appData.music.forEach(link => {
-
-    // 🎯 HANDLE PLAYLIST
-    if (link.includes("playlist")) {
-      let id = link.split("list=")[1];
-
-      html += `
-      <div class="card">
-        <iframe width="100%" height="200"
-        src="https://www.youtube.com/embed/videoseries?list=${id}"
-        frameborder="0" allowfullscreen></iframe>
-      </div>`;
+function renderMusic(){
+  let html="";
+  appData.music.forEach(l=>{
+    if(l.includes("playlist")){
+      let id=l.split("list=")[1];
+      html+=`<iframe src="https://www.youtube.com/embed/videoseries?list=${id}"></iframe>`;
+    } else if(l.includes("watch?v=")){
+      let id=l.split("v=")[1];
+      html+=`<iframe src="https://www.youtube.com/embed/${id}"></iframe>`;
     }
-
-    // 🎯 HANDLE VIDEO
-    else if (link.includes("watch?v=")) {
-      let id = link.split("v=")[1];
-
-      html += `
-      <div class="card">
-        <iframe width="100%" height="200"
-        src="https://www.youtube.com/embed/${id}"
-        frameborder="0" allowfullscreen></iframe>
-      </div>`;
-    }
-
   });
-
-  document.getElementById("musicList").innerHTML = html;
+  document.getElementById("musicList").innerHTML=html;
 }
 
-
-// RENDER ALL
+// RENDER
 function renderAll(){
   renderDashboard();
   renderChat();
