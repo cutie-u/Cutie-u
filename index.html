@@ -34,8 +34,6 @@ body{
 }
 .bar{height:12px;background:#eee;border-radius:20px;}
 .fill {
-  box-shadow: 0 0 10px rgba(255, 77, 136, 0.6);
-}
   height:100%;
   background:linear-gradient(90deg,#ff6fa5,#ff2e75);
   border-radius:20px;
@@ -236,33 +234,40 @@ function handleBarClick(e, key){
   save();
 }
 let slidingKey = null;
+let currentBar = null;
 
 function startSlide(e, key){
   slidingKey = key;
-  updateSlide(e, key);
+  currentBar = e.currentTarget; // ✅ store correct bar
+  updateSlide(e);
 }
 
-function moveSlide(e, key){
-  if(slidingKey !== key) return;
-  updateSlide(e, key);
+function moveSlide(e){
+  if(!slidingKey) return;
+  updateSlide(e);
 }
 
-function updateSlide(e, key){
+function updateSlide(e){
   let touch = e.touches ? e.touches[0] : e;
 
-  let rect = e.currentTarget.getBoundingClientRect();
+  let rect = currentBar.getBoundingClientRect(); // ✅ FIX
   let percent = ((touch.clientX - rect.left) / rect.width) * 100;
 
   percent = Math.max(0, Math.min(100, percent));
 
-  data[key] = Math.round(percent);
+  data[slidingKey] = Math.round(percent);
   save();
 }
 
 // stop sliding
-document.addEventListener("mouseup", ()=> slidingKey=null);
-document.addEventListener("touchend", ()=> slidingKey=null);
-
+document.addEventListener("mouseup", ()=>{
+  slidingKey = null;
+  currentBar = null;
+});
+document.addEventListener("touchend", ()=>{
+  slidingKey = null;
+  currentBar = null;
+});
 // CHAT
 function sendMsg(){
   let t=document.getElementById("chatInput").value;
