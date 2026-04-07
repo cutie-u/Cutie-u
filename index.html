@@ -2,196 +2,132 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>💗 Relationship OS</title>
 
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff4d88">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
 <style>
-* {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
+body{
+  margin:0;
+  font-family:-apple-system;
+  background:linear-gradient(135deg,#ffe4ec,#ffd6e0);
 }
 
-body {
-  margin: 0;
-  font-family: -apple-system, sans-serif;
-  background: linear-gradient(135deg,#ffe4ec,#ffd6e0);
-  color: #222;
+/* NAV */
+.nav{
+  display:flex;
+  justify-content:space-around;
+  padding:10px;
 }
 
-/* HEADER */
-.header {
-  padding: 25px 20px 10px;
-}
-
-.header h1 {
-  margin: 0;
-  font-size: 28px;
-}
-
-.header p {
-  margin: 4px 0 0;
-  opacity: 0.6;
-}
+/* SECTION */
+.section{display:none;padding:15px;}
+.section.active{display:block;}
 
 /* CARD */
-.card {
-  margin: 15px;
-  padding: 15px;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.5);
-  backdrop-filter: blur(15px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+.card{
+  background:rgba(255,255,255,0.5);
+  padding:15px;
+  border-radius:15px;
+  margin-bottom:10px;
 }
 
 /* BAR */
-.bar {
-  height: 14px;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.6);
-  overflow: hidden;
-}
-
-.fill {
-  height: 100%;
-  border-radius: 20px;
-  background: linear-gradient(90deg,#ff6fa5,#ff2e75);
-  box-shadow: 0 4px 12px rgba(255,80,120,0.4);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: 0.6s ease;
-}
-
-/* LABEL */
-.row {
-  display:flex;
-  justify-content:space-between;
-  font-size:14px;
-  margin-top:12px;
-}
-
-/* FADE */
-.fade {
-  animation: fadeIn 0.6s ease;
-}
-
-@keyframes fadeIn {
-  from {opacity:0; transform: translateY(10px);}
-  to {opacity:1; transform: translateY(0);}
-}
-
-/* BUTTON */
-button {
-  background: linear-gradient(135deg,#ff8fab,#ff4d88);
-  border: none;
-  padding: 10px;
-  border-radius: 12px;
-  color: white;
-  margin-top: 10px;
+.bar{height:12px;background:#eee;border-radius:20px;}
+.fill{
+  height:100%;
+  background:linear-gradient(90deg,#ff6fa5,#ff2e75);
+  border-radius:20px;
+  transform:scaleX(0);
+  transform-origin:left;
+  transition:0.6s;
 }
 
 /* INPUT */
-input {
-  width: 100%;
-  padding: 10px;
-  border-radius: 12px;
-  border: none;
-  margin-top: 10px;
+input,textarea{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  margin-top:5px;
+}
+
+button{
+  margin-top:8px;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  background:#ff4d88;
+  color:white;
+}
+
+/* CHAT */
+.msg{
+  padding:8px;
+  border-radius:10px;
+  margin:5px;
+  max-width:70%;
+}
+.me{background:#ff4d88;color:white;margin-left:auto;}
+.other{background:white;}
+
+iframe{
+  width:100%;
+  height:200px;
+  border-radius:10px;
+}
+
+/* NOTIFICATION */
+.notify{
+  position:fixed;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#ff4d88;
+  color:white;
+  padding:10px;
+  border-radius:10px;
 }
 </style>
 </head>
 
 <body>
-<script>
 
-// USER
-let user = new URLSearchParams(location.search).get("user") || "you";
-
-// DATA
-let appData = JSON.parse(localStorage.getItem("appData")) || {
-  you:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
-  her:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30}
-};
-
-let data = appData[user];
-
-const labels = {
-  trust:"Trust",
-  mood:"Mood",
-  love:"Love",
-  angry:"Angry",
-  miss:"Miss",
-  freaky:"Freaky"
-};
-
-// RENDER
-function render() {
-  document.getElementById("userTitle").innerText = "💗 " + user;
-
-  let html = "";
-
-  for (let k in data) {
-    html += `
-    <div class="row">
-      <span>${labels[k]}</span>
-      <span>${data[k]}%</span>
-    </div>
-    <div class="bar">
-      <div class="fill" style="width:${data[k]}%"></div>
-    </div>`;
-  }
-
-  document.getElementById("bars").innerHTML = html;
-
-  // animation trigger
-  setTimeout(()=>{
-    document.querySelectorAll(".fill").forEach(el=>{
-      el.style.transform="scaleX(1)";
-    });
-  },100);
-}
-
-render();
-
-</script>
-
-</style>
-</head>
-
-<body>
-
-<div class="topbar">
-  <div>💗</div>
-  <div onclick="toggleMenu()">⋮</div>
+<div class="nav">
+  <div onclick="show('dashboard')">💗</div>
+  <div onclick="show('chat')">💬</div>
+  <div onclick="show('tasks')">🎯</div>
+  <div onclick="show('memories')">📸</div>
+  <div onclick="show('music')">🎵</div>
 </div>
 
-<div class="sidebar" id="sidebar">
-  <div onclick="show('dashboard')">Dashboard</div>
-  <div onclick="show('chat')">Chat</div>
-  <div onclick="show('tasks')">Tasks</div>
-  <div onclick="show('memories')">Memories</div>
-  <div onclick="show('music')">Music</div>
-</div>
-
-<div class="container">
-
+<!-- DASHBOARD -->
 <div id="dashboard" class="section active">
-  <h2 id="userTitle"></h2>
-  <div id="bars"></div>
-  <div class="bar"><div id="overallBar" class="fill"></div></div>
-  <p id="reaction"></p>
+  <div class="card">
+    <h3 id="userTitle"></h3>
+    <div id="bars"></div>
+  </div>
 </div>
 
+<!-- CHAT -->
 <div id="chat" class="section">
   <div id="chatBox"></div>
   <input id="chatInput">
   <button onclick="sendMsg()">Send</button>
 </div>
 
+<!-- TASKS -->
 <div id="tasks" class="section">
   <input id="taskInput">
   <button onclick="addTask()">Add</button>
   <div id="taskList"></div>
 </div>
 
+<!-- MEMORIES -->
 <div id="memories" class="section">
   <input type="file" id="imgInput">
   <textarea id="noteInput"></textarea>
@@ -199,22 +135,27 @@ render();
   <div id="memoryList"></div>
 </div>
 
+<!-- MUSIC -->
 <div id="music" class="section">
-  <input id="musicInput">
+  <input id="musicInput" placeholder="YouTube link">
   <button onclick="addMusic()">Add</button>
   <div id="musicList"></div>
-</div>
-
 </div>
 
 <script>
 
 // HAPTIC
-function haptic(type="light"){
-  if(navigator.vibrate){
-    if(type==="heavy") navigator.vibrate(30);
-    else navigator.vibrate(10);
-  }
+function haptic(){
+  if(navigator.vibrate) navigator.vibrate(10);
+}
+
+// NOTIFICATION
+function notify(text){
+  let n=document.createElement("div");
+  n.className="notify";
+  n.innerText=text;
+  document.body.appendChild(n);
+  setTimeout(()=>n.remove(),2000);
 }
 
 // USER
@@ -234,17 +175,11 @@ const labels={
   angry:"Angry",miss:"Miss",freaky:"Freaky"
 };
 
-// MENU
-function toggleMenu(){
-  haptic();
-  document.getElementById("sidebar").classList.toggle("active");
-}
-
+// NAV
 function show(id){
   haptic();
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
-  setTimeout(()=>document.getElementById(id).classList.add("active"),100);
-  toggleMenu();
+  document.getElementById(id).classList.add("active");
 }
 
 // SAVE
@@ -256,54 +191,45 @@ function save(){
 
 // DASHBOARD
 function renderDashboard(){
-  document.getElementById("userTitle").innerText=user;
+  document.getElementById("userTitle").innerText="💗 "+user;
 
-  let html="",total=0,count=0;
+  let html="";
   for(let k in data){
-    total+=data[k];count++;
-    html+=`<div>${labels[k]} ${data[k]}%</div>
+    html+=`${labels[k]} ${data[k]}%
     <div class="bar"><div class="fill" style="width:${data[k]}%"></div></div>`;
   }
 
   document.getElementById("bars").innerHTML=html;
-  document.getElementById("overallBar").style.width=(total/count)+"%";
 
-  let r="";
-  if(data.angry>70) r="You messed up 😶";
-  else if(data.love>70) r="Good job 💗";
-  document.getElementById("reaction").innerText=r;
+  setTimeout(()=>{
+    document.querySelectorAll(".fill").forEach(el=>{
+      el.style.transform="scaleX(1)";
+    });
+  },100);
 }
 
 // CHAT
 function sendMsg(){
-  haptic("heavy");
+  haptic();
   let t=document.getElementById("chatInput").value;
-  appData.chat.push({user,text:t,time:new Date().toLocaleTimeString()});
+  appData.chat.push({user,text:t});
+  notify("💬 Message sent");
   save();
 }
 
 function renderChat(){
   let html="";
   appData.chat.forEach(m=>{
-    html+=`<div class="chat ${m.user===user?'me':'other'}">
-    ${m.text}<br><small>${m.time}</small></div>`;
+    html+=`<div class="msg ${m.user===user?'me':'other'}">${m.text}</div>`;
   });
   document.getElementById("chatBox").innerHTML=html;
 }
 
 // TASKS
 function addTask(){
-  haptic();
   let t=document.getElementById("taskInput").value;
   appData.tasks.push({text:t,done:false});
-  save();
-}
-
-function toggleTask(i){
-  haptic("heavy");
-  let t=appData.tasks[i];
-  t.done=!t.done;
-  if(t.done) data.trust=Math.min(100,data.trust+5);
+  notify("🎯 Task added");
   save();
 }
 
@@ -316,9 +242,14 @@ function renderTasks(){
   document.getElementById("taskList").innerHTML=html;
 }
 
+function toggleTask(i){
+  appData.tasks[i].done=!appData.tasks[i].done;
+  notify("✔ Task updated");
+  save();
+}
+
 // MEMORIES
 function saveMemory(){
-  haptic("heavy");
   let file=document.getElementById("imgInput").files[0];
   let note=document.getElementById("noteInput").value;
 
@@ -327,9 +258,9 @@ function saveMemory(){
     appData.memories.unshift({
       img:e.target.result,
       note,
-      time:new Date().toLocaleString(),
-      pinned:false
+      time:new Date().toLocaleString()
     });
+    notify("📸 Memory saved");
     save();
   };
   reader.readAsDataURL(file);
@@ -337,29 +268,21 @@ function saveMemory(){
 
 function renderMemories(){
   let html="";
-  appData.memories.forEach((m,i)=>{
-    html+=`
-    <div class="card">
+  appData.memories.forEach(m=>{
+    html+=`<div class="card">
       <img src="${m.img}" style="width:100%">
       <p>${m.note}</p>
       <small>${m.time}</small>
-      <button onclick="togglePin(${i})">📌</button>
     </div>`;
   });
   document.getElementById("memoryList").innerHTML=html;
 }
 
-function togglePin(i){
-  haptic();
-  appData.memories[i].pinned=!appData.memories[i].pinned;
-  save();
-}
-
 // MUSIC
 function addMusic(){
-  haptic();
   let l=document.getElementById("musicInput").value;
   appData.music.push(l);
+  notify("🎵 Song added");
   save();
 }
 
@@ -377,7 +300,7 @@ function renderMusic(){
   document.getElementById("musicList").innerHTML=html;
 }
 
-// RENDER
+// INIT
 function renderAll(){
   renderDashboard();
   renderChat();
