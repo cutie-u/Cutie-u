@@ -10,33 +10,29 @@
 <link rel="apple-touch-icon" href="icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
 <style>
 body{
   margin:0;
   font-family:-apple-system;
   background:linear-gradient(135deg,#ffe4ec,#ffd6e0);
 }
-
-/* NAV */
 .nav{
   display:flex;
   justify-content:space-around;
   padding:10px;
 }
-
-/* SECTION */
 .section{display:none;padding:15px;}
 .section.active{display:block;}
-
-/* CARD */
 .card{
   background:rgba(255,255,255,0.5);
   padding:15px;
   border-radius:15px;
   margin-bottom:10px;
 }
-
-/* BAR */
 .bar{height:12px;background:#eee;border-radius:20px;}
 .fill{
   height:100%;
@@ -46,8 +42,6 @@ body{
   transform-origin:left;
   transition:0.6s;
 }
-
-/* INPUT */
 input,textarea{
   width:100%;
   padding:10px;
@@ -55,7 +49,6 @@ input,textarea{
   border-radius:10px;
   margin-top:5px;
 }
-
 button{
   margin-top:8px;
   padding:10px;
@@ -64,8 +57,6 @@ button{
   background:#ff4d88;
   color:white;
 }
-
-/* CHAT */
 .msg{
   padding:8px;
   border-radius:10px;
@@ -74,14 +65,7 @@ button{
 }
 .me{background:#ff4d88;color:white;margin-left:auto;}
 .other{background:white;}
-
-iframe{
-  width:100%;
-  height:200px;
-  border-radius:10px;
-}
-
-/* NOTIFICATION */
+iframe{width:100%;height:200px;border-radius:10px;}
 .notify{
   position:fixed;
   top:20px;
@@ -105,7 +89,6 @@ iframe{
   <div onclick="show('music')">🎵</div>
 </div>
 
-<!-- DASHBOARD -->
 <div id="dashboard" class="section active">
   <div class="card">
     <h3 id="userTitle"></h3>
@@ -113,21 +96,18 @@ iframe{
   </div>
 </div>
 
-<!-- CHAT -->
 <div id="chat" class="section">
   <div id="chatBox"></div>
   <input id="chatInput">
   <button onclick="sendMsg()">Send</button>
 </div>
 
-<!-- TASKS -->
 <div id="tasks" class="section">
   <input id="taskInput">
   <button onclick="addTask()">Add</button>
   <div id="taskList"></div>
 </div>
 
-<!-- MEMORIES -->
 <div id="memories" class="section">
   <input type="file" id="imgInput">
   <textarea id="noteInput"></textarea>
@@ -135,7 +115,6 @@ iframe{
   <div id="memoryList"></div>
 </div>
 
-<!-- MUSIC -->
 <div id="music" class="section">
   <input id="musicInput" placeholder="YouTube link">
   <button onclick="addMusic()">Add</button>
@@ -144,12 +123,24 @@ iframe{
 
 <script>
 
-// HAPTIC
-function haptic(){
-  if(navigator.vibrate) navigator.vibrate(10);
-}
+// 🔥 FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyCsv34rRwtD35qcTl8RMeBwFF5F_azkMg8",
+  authDomain: "rating-bar-24a81.firebaseapp.com",
+  databaseURL: "https://rating-bar-24a81-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "rating-bar-24a81",
+  storageBucket: "rating-bar-24a81.firebasestorage.app",
+  messagingSenderId: "1017485664370",
+  appId: "1:1017485664370:web:a0b43f4426238a61ce22eb"
+};
 
-// NOTIFICATION
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// HAPTIC
+function haptic(){ if(navigator.vibrate) navigator.vibrate(10); }
+
+// NOTIFY
 function notify(text){
   let n=document.createElement("div");
   n.className="notify";
@@ -161,32 +152,35 @@ function notify(text){
 // USER
 let user=new URLSearchParams(location.search).get("user")||"you";
 
-// DATA
-let appData=JSON.parse(localStorage.getItem("appData"))||{
-  you:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
-  her:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
-  chat:[],tasks:[],memories:[],music:[]
-};
-
-let data=appData[user];
+let appData={}, data={};
 
 const labels={
   trust:"Trust",mood:"Mood",love:"Love",
   angry:"Angry",miss:"Miss",freaky:"Freaky"
 };
 
+// 🔥 LIVE SYNC
+db.ref("appData").on("value", snap=>{
+  appData = snap.val() || {
+    you:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
+    her:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
+    chat:[],tasks:[],memories:[],music:[]
+  };
+
+  data = appData[user];
+  renderAll();
+});
+
+// SAVE
+function save(){
+  db.ref("appData").set(appData);
+}
+
 // NAV
 function show(id){
   haptic();
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
-}
-
-// SAVE
-function save(){
-  appData[user]=data;
-  localStorage.setItem("appData",JSON.stringify(appData));
-  renderAll();
 }
 
 // DASHBOARD
@@ -210,17 +204,21 @@ function renderDashboard(){
 
 // CHAT
 function sendMsg(){
-  haptic();
   let t=document.getElementById("chatInput").value;
-  appData.chat.push({user,text:t});
-  notify("💬 Message sent");
+  appData.chat.push({
+    user,
+    text:t,
+    time:new Date().toLocaleTimeString()
+  });
+  notify("💬 Sent");
   save();
 }
 
 function renderChat(){
   let html="";
   appData.chat.forEach(m=>{
-    html+=`<div class="msg ${m.user===user?'me':'other'}">${m.text}</div>`;
+    html+=`<div class="msg ${m.user===user?'me':'other'}">
+    ${m.text}<br><small>${m.time||""}</small></div>`;
   });
   document.getElementById("chatBox").innerHTML=html;
 }
@@ -244,7 +242,6 @@ function renderTasks(){
 
 function toggleTask(i){
   appData.tasks[i].done=!appData.tasks[i].done;
-  notify("✔ Task updated");
   save();
 }
 
@@ -260,7 +257,7 @@ function saveMemory(){
       note,
       time:new Date().toLocaleString()
     });
-    notify("📸 Memory saved");
+    notify("📸 Saved");
     save();
   };
   reader.readAsDataURL(file);
@@ -282,7 +279,7 @@ function renderMemories(){
 function addMusic(){
   let l=document.getElementById("musicInput").value;
   appData.music.push(l);
-  notify("🎵 Song added");
+  notify("🎵 Added");
   save();
 }
 
@@ -300,7 +297,7 @@ function renderMusic(){
   document.getElementById("musicList").innerHTML=html;
 }
 
-// INIT
+// RENDER
 function renderAll(){
   renderDashboard();
   renderChat();
@@ -308,8 +305,6 @@ function renderAll(){
   renderMemories();
   renderMusic();
 }
-
-renderAll();
 
 </script>
 
