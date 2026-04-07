@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💗 Widget</title>
+
+<style>
+body {
+  margin:0;
+  font-family:-apple-system,sans-serif;
+  background:#111;
+  color:white;
+  padding:15px;
+}
+
+/* CARD */
+.widget {
+  background: rgba(255,255,255,0.08);
+  border-radius:20px;
+  padding:15px;
+  backdrop-filter: blur(10px);
+}
+
+/* TITLE */
+.title {
+  font-size:18px;
+  margin-bottom:10px;
+}
+
+/* BAR */
+.row {
+  display:flex;
+  justify-content:space-between;
+  font-size:13px;
+  margin-top:8px;
+}
+
+.bar {
+  height:6px;
+  background:rgba(255,255,255,0.2);
+  border-radius:10px;
+}
+
+.fill {
+  height:100%;
+  background:#ff4d88;
+  border-radius:10px;
+}
+
+/* MUSIC */
+.music {
+  margin-top:15px;
+}
+
+iframe {
+  width:100%;
+  height:80px;
+  border-radius:12px;
+}
+
+/* INPUT */
+input {
+  width:100%;
+  padding:8px;
+  border-radius:10px;
+  border:none;
+  margin-top:8px;
+}
+
+button {
+  width:100%;
+  padding:8px;
+  border-radius:10px;
+  border:none;
+  margin-top:8px;
+  background:#ff4d88;
+  color:white;
+}
+</style>
+</head>
+
+<body>
+
+<div class="widget">
+
+  <div class="title" id="userTitle">💗 you</div>
+
+  <div id="bars"></div>
+
+  <div class="music">
+    <div>🎵 Suggest a song</div>
+    <input id="musicInput" placeholder="Paste YouTube link">
+    <button onclick="addMusic()">Send 💗</button>
+
+    <div id="musicList"></div>
+  </div>
+
+</div>
+
+<script>
+
+// USER
+let user = new URLSearchParams(location.search).get("user") || "you";
+
+// DATA
+let appData = JSON.parse(localStorage.getItem("appData")) || {
+  you:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
+  her:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
+  sharedMusic:[]
+};
+
+let data = appData[user];
+
+// LABELS (compact)
+const labels = {
+  trust:"Trust",
+  mood:"Mood",
+  love:"Love"
+};
+
+// RENDER BARS
+function renderBars(){
+  let html="";
+  for(let k in labels){
+    html+=`
+    <div class="row">
+      <span>${labels[k]}</span>
+      <span>${data[k]}%</span>
+    </div>
+    <div class="bar">
+      <div class="fill" style="width:${data[k]}%"></div>
+    </div>`;
+  }
+  document.getElementById("bars").innerHTML=html;
+}
+
+// ADD MUSIC
+function addMusic(){
+  let link=document.getElementById("musicInput").value;
+
+  appData.sharedMusic.unshift({
+    from:user,
+    link:link
+  });
+
+  localStorage.setItem("appData",JSON.stringify(appData));
+  renderMusic();
+}
+
+// RENDER MUSIC
+function renderMusic(){
+  let html="";
+
+  appData.sharedMusic.forEach(m=>{
+
+    if(m.link.includes("playlist")){
+      let id=m.link.split("list=")[1];
+      html+=`
+      <div style="margin-top:10px">
+        <small>${m.from}</small>
+        <iframe src="https://www.youtube.com/embed/videoseries?list=${id}"></iframe>
+      </div>`;
+    }
+
+    else if(m.link.includes("watch?v=")){
+      let id=m.link.split("v=")[1];
+      html+=`
+      <div style="margin-top:10px">
+        <small>${m.from}</small>
+        <iframe src="https://www.youtube.com/embed/${id}"></iframe>
+      </div>`;
+    }
+
+  });
+
+  document.getElementById("musicList").innerHTML=html;
+}
+
+// INIT
+document.getElementById("userTitle").innerText="💗 "+user;
+renderBars();
+renderMusic();
+
+</script>
+
+</body>
+</html>
