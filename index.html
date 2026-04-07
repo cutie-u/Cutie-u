@@ -343,32 +343,56 @@ function renderMemories(){
 }
 
 // MUSIC
+function addMusic(){
+  let l = document.getElementById("musicInput").value.trim();
+
+  if(!l){
+    alert("Enter link bro");
+    return;
+  }
+
+  appData.music.push(l);
+
+  document.getElementById("musicInput").value="";
+
+  renderMusic(); // 🔥 force UI update
+  save();
+}
+
 function renderMusic(){
   let html="";
 
-  appData.music.forEach(l=>{
+  appData.music.forEach(link=>{
 
-    let id="";
+    try{
+      let url = new URL(link);
+      let id = "";
 
-    // youtu.be link
-    if(l.includes("youtu.be/")){
-      id = l.split("youtu.be/")[1].split("?")[0];
-    }
+      // youtu.be
+      if(url.hostname.includes("youtu.be")){
+        id = url.pathname.replace("/", "");
+      }
 
-    // normal youtube
-    else if(l.includes("watch?v=")){
-      id = l.split("v=")[1].split("&")[0];
-    }
+      // youtube watch
+      else if(url.hostname.includes("youtube.com")){
+        if(url.searchParams.get("v")){
+          id = url.searchParams.get("v");
+        }
 
-    // playlist
-    else if(l.includes("list=")){
-      let pid = l.split("list=")[1].split("&")[0];
-      html += `<iframe src="https://www.youtube.com/embed/videoseries?list=${pid}"></iframe>`;
-      return;
-    }
+        // playlist
+        if(url.searchParams.get("list")){
+          let pid = url.searchParams.get("list");
+          html += `<iframe src="https://www.youtube.com/embed/videoseries?list=${pid}"></iframe>`;
+          return;
+        }
+      }
 
-    if(id){
-      html += `<iframe src="https://www.youtube.com/embed/${id}"></iframe>`;
+      if(id){
+        html += `<iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>`;
+      }
+
+    } catch(e){
+      console.log("Invalid link:", link);
     }
 
   });
