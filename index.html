@@ -10,7 +10,6 @@
 <link rel="apple-touch-icon" href="icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -123,7 +122,7 @@ iframe{width:100%;height:200px;border-radius:10px;}
 
 <script>
 
-// 🔥 FIREBASE CONFIG
+// FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyCsv34rRwtD35qcTl8RMeBwFF5F_azkMg8",
   authDomain: "rating-bar-24a81.firebaseapp.com",
@@ -137,18 +136,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// HAPTIC
-function haptic(){ if(navigator.vibrate) navigator.vibrate(10); }
-
-// NOTIFY
-function notify(text){
-  let n=document.createElement("div");
-  n.className="notify";
-  n.innerText=text;
-  document.body.appendChild(n);
-  setTimeout(()=>n.remove(),2000);
-}
-
 // USER
 let user=new URLSearchParams(location.search).get("user")||"you";
 
@@ -159,14 +146,13 @@ const labels={
   angry:"Angry",miss:"Miss",freaky:"Freaky"
 };
 
-// 🔥 LIVE SYNC
+// LIVE SYNC
 db.ref("appData").on("value", snap=>{
   appData = snap.val() || {
     you:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
     her:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
     chat:[],tasks:[],memories:[],music:[]
   };
-
   data = appData[user];
   renderAll();
 });
@@ -178,28 +164,46 @@ function save(){
 
 // NAV
 function show(id){
-  haptic();
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
 
-// DASHBOARD
+// 🔥 FIXED DASHBOARD (SLIDERS)
 function renderDashboard(){
   document.getElementById("userTitle").innerText="💗 "+user;
 
   let html="";
   for(let k in data){
-    html+=`${labels[k]} ${data[k]}%
-    <div class="bar"><div class="fill" style="width:${data[k]}%"></div></div>`;
+    html += `
+    <div style="margin-top:10px;">
+      <div style="display:flex;justify-content:space-between;">
+        <span>${labels[k]}</span>
+        <span>${data[k]}%</span>
+      </div>
+
+      <input type="range" min="0" max="100" value="${data[k]}"
+        onchange="updateBar('${k}', this.value)"
+        style="width:100%">
+      
+      <div class="bar">
+        <div class="fill" style="width:${data[k]}%"></div>
+      </div>
+    </div>`;
   }
 
-  document.getElementById("bars").innerHTML=html;
+  document.getElementById("bars").innerHTML = html;
 
   setTimeout(()=>{
     document.querySelectorAll(".fill").forEach(el=>{
       el.style.transform="scaleX(1)";
     });
   },100);
+}
+
+// UPDATE BAR
+function updateBar(key,value){
+  data[key]=parseInt(value);
+  save();
 }
 
 // CHAT
@@ -210,7 +214,7 @@ function sendMsg(){
     text:t,
     time:new Date().toLocaleTimeString()
   });
-  notify("💬 Sent");
+  document.getElementById("chatInput").value="";
   save();
 }
 
@@ -220,14 +224,16 @@ function renderChat(){
     html+=`<div class="msg ${m.user===user?'me':'other'}">
     ${m.text}<br><small>${m.time||""}</small></div>`;
   });
-  document.getElementById("chatBox").innerHTML=html;
+  let box=document.getElementById("chatBox");
+  box.innerHTML=html;
+  box.scrollTop=box.scrollHeight;
 }
 
 // TASKS
 function addTask(){
   let t=document.getElementById("taskInput").value;
   appData.tasks.push({text:t,done:false});
-  notify("🎯 Task added");
+  document.getElementById("taskInput").value="";
   save();
 }
 
@@ -257,7 +263,6 @@ function saveMemory(){
       note,
       time:new Date().toLocaleString()
     });
-    notify("📸 Saved");
     save();
   };
   reader.readAsDataURL(file);
@@ -279,7 +284,7 @@ function renderMemories(){
 function addMusic(){
   let l=document.getElementById("musicInput").value;
   appData.music.push(l);
-  notify("🎵 Added");
+  document.getElementById("musicInput").value="";
   save();
 }
 
