@@ -15,10 +15,15 @@ body{
   background:linear-gradient(135deg,#ffe4ec,#ffd6e0);
   padding-bottom:140px;
 }
+
+/* NAV */
 .nav{display:flex;justify-content:space-around;padding:10px;}
+
+/* SECTIONS */
 .section{display:none;padding:15px;}
 .section.active{display:block;}
 
+/* CARD */
 .card{
   background:rgba(255,255,255,0.5);
   padding:15px;
@@ -26,43 +31,76 @@ body{
   margin-top:10px;
 }
 
-.bar{
-  height:14px;
-  background:#eee;
-  border-radius:20px;
-  margin-top:6px;
-  overflow:hidden;
-}
-.fill{
-  height:100%;
-  background:linear-gradient(90deg,#ff6fa5,#ff2e75);
-  border-radius:20px;
-  transition:width 0.15s;
+/* BARS */
+.bar{height:14px;background:#eee;border-radius:20px;margin-top:6px;overflow:hidden;}
+.fill{height:100%;background:linear-gradient(90deg,#ff6fa5,#ff2e75);border-radius:20px;}
+
+/* 💬 CHAT UI */
+#chatBox{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding-bottom:80px;
 }
 
-input{
-  width:100%;
-  padding:10px;
-  border:none;
-  border-radius:10px;
-  margin-top:5px;
+.msg{
+  padding:10px 14px;
+  border-radius:18px;
+  max-width:75%;
+  font-size:14px;
+  backdrop-filter:blur(10px);
+  animation:fadeIn 0.2s ease;
 }
 
-button{
-  margin-top:8px;
-  padding:10px;
-  border:none;
-  border-radius:10px;
-  background:#ff4d88;
+.me{
+  background:linear-gradient(135deg,#ff4d88,#ff2e75);
   color:white;
+  margin-left:auto;
+  border-bottom-right-radius:6px;
 }
 
-.msg{padding:8px;border-radius:10px;margin:5px;max-width:70%;}
-.me{background:#ff4d88;color:white;margin-left:auto;}
-.other{background:white;}
+.other{
+  background:rgba(255,255,255,0.7);
+  border-bottom-left-radius:6px;
+}
 
-small{font-size:10px;color:#666;}
+.ai{
+  background:rgba(255,255,255,0.9);
+  border-left:3px solid #ff4d88;
+}
 
+.msg small{
+  display:block;
+  font-size:10px;
+  opacity:0.6;
+}
+
+/* INPUT BAR */
+.chatInputBox{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  padding:10px;
+  background:rgba(255,255,255,0.6);
+  backdrop-filter:blur(15px);
+  display:flex;
+  gap:8px;
+}
+
+.chatInputBox input{
+  flex:1;
+  border-radius:20px;
+  padding:10px;
+  border:none;
+}
+
+.chatInputBox button{
+  width:40px;height:40px;border-radius:50%;
+  background:#ff4d88;color:white;border:none;
+}
+
+/* PLAYER */
 #globalPlayer{
   position:fixed;
   bottom:80px;
@@ -78,12 +116,13 @@ small{font-size:10px;color:#666;}
   padding:10px;
 }
 
-.playerMini iframe{height:100px;}
-.playerFull{
-  width:90vw !important;
-  left:5vw !important;
-}
+.playerFull{width:90vw !important;left:5vw !important;}
 .playerFull iframe{height:200px;}
+
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(5px);}
+  to{opacity:1;}
+}
 </style>
 </head>
 
@@ -103,8 +142,11 @@ small{font-size:10px;color:#666;}
 
 <div id="chat" class="section">
   <div id="chatBox"></div>
-  <input id="chatInput">
-  <button onclick="sendMsg()">Send</button>
+
+  <div class="chatInputBox">
+    <input id="chatInput" placeholder="Message...">
+    <button onclick="sendMsg()">➤</button>
+  </div>
 </div>
 
 <div id="music" class="section">
@@ -115,62 +157,44 @@ small{font-size:10px;color:#666;}
 
 <script>
 
-// 🔥 FIREBASE (YOUR REAL CONFIG)
+// 🔥 FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyCsv34rRwtD35qcTl8RMeBwFF5F_azkMg8",
   authDomain: "rating-bar-24a81.firebaseapp.com",
-  databaseURL: "https://rating-bar-24a81-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "rating-bar-24a81",
-  storageBucket: "rating-bar-24a81.firebasestorage.app",
-  messagingSenderId: "1017485664370",
-  appId: "1:1017485664370:web:a0b43f4426238a61ce22eb"
+  databaseURL: "https://rating-bar-24a81-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// USER
 let user=new URLSearchParams(location.search).get("user")||"you";
 let appData={}, data={};
 
-const names={ you:"Prashant", her:"Kanika" };
+const names={you:"Prashant",her:"Kanika"};
 
 const labels={
   trust:"Trust",mood:"Mood",love:"Love",
   angry:"Angry",miss:"Miss",freaky:"Freaky"
 };
 
-// 🔥 PRESENCE WRITE
-let presenceRef = db.ref("appData/presence/" + user);
+// 🔥 PRESENCE
+let presenceRef=db.ref("appData/presence/"+user);
 
-presenceRef.set({
-  online: true,
-  lastSeen: Date.now()
+presenceRef.set({online:true,lastSeen:Date.now()});
+
+window.addEventListener("beforeunload",()=>{
+  presenceRef.set({online:false,lastSeen:Date.now()});
 });
 
-window.addEventListener("beforeunload", ()=>{
-  presenceRef.set({
-    online:false,
-    lastSeen:Date.now()
-  });
-});
-
-// 🔥 LIVE SYNC
-db.ref("appData").on("value", snap=>{
+// 🔥 SYNC
+db.ref("appData").on("value",snap=>{
   appData=snap.val()||{you:{},her:{},chat:[],music:[],presence:{}};
-
-  if(!appData.you) appData.you={};
-  if(!appData.her) appData.her={};
-  if(!appData.chat) appData.chat=[];
-  if(!appData.music) appData.music=[];
-  if(!appData.presence) appData.presence={};
-
   data=appData[user];
   renderAll();
 });
 
 // SAVE
-function save(){ db.ref("appData").set(appData); }
+function save(){db.ref("appData").set(appData);}
 
 // NAV
 function show(id){
@@ -178,109 +202,48 @@ function show(id){
   document.getElementById(id).classList.add("active");
 }
 
-// 🔥 STATUS
+// STATUS
 function showStatus(){
-  let other = user==="you"?"her":"you";
-  let p = appData.presence?.[other];
-
+  let other=user==="you"?"her":"you";
+  let p=appData.presence?.[other];
   if(!p) return "";
-
   if(p.online) return "🟢 Online";
-
   return "Last seen: "+new Date(p.lastSeen).toLocaleTimeString();
 }
 
-// 💗 DASHBOARD
+// DASHBOARD
 function renderDashboard(){
-  let html="";
   let other=user==="you"?"her":"you";
 
-  html+=`<div class="card">
-    <h3>💗 ${names[user]}</h3>
+  document.getElementById("bars").innerHTML=`
+  <div class="card">
+    <h3>${names[user]}</h3>
     ${renderBars(user,true)}
-  </div>`;
+  </div>
 
-  html+=`<div class="card">
-    <h3>💖 ${names[other]}</h3>
+  <div class="card">
+    <h3>${names[other]}</h3>
     <small>${showStatus()}</small>
     ${renderBars(other,false)}
   </div>`;
-
-  document.getElementById("bars").innerHTML=html;
-  enableSliding();
 }
 
-function renderBars(person, editable){
+function renderBars(person,edit){
   let html="";
-  let hour=new Date().getHours();
-
   for(let k in labels){
-
-    if(k==="freaky" && !(hour>=23||hour<6)) continue;
-
-    let raw=appData[person][k];
-    let val=0, time=null;
-
-    if(typeof raw==="object"){
-      val=raw.value??0;
-      time=raw.time;
-    } else {
-      val=raw??0;
-    }
-
+    let val=appData[person][k]?.value||0;
     html+=`
     <div>
-      <span>${labels[k]}</span>
-      <span>${val}%</span>
-      ${time?`<small>${new Date(time).toLocaleTimeString()}</small>`:""}
-      <div class="bar" ${editable?`data-key="${k}"`:""}>
+      ${labels[k]} ${val}%
+      <div class="bar" ${edit?`data-key="${k}"`:""}>
         <div class="fill" style="width:${val}%"></div>
       </div>
     </div>`;
   }
-
   return html;
 }
 
-// 🔥 SLIDER
-let activeBar=null, activeKey=null;
-
-function enableSliding(){
-  document.querySelectorAll(".bar[data-key]").forEach(bar=>{
-    bar.addEventListener("mousedown", e=>{
-      activeBar=bar;
-      activeKey=bar.dataset.key;
-      updateSlide(e.clientX);
-    });
-
-    bar.addEventListener("touchstart", e=>{
-      activeBar=bar;
-      activeKey=bar.dataset.key;
-      updateSlide(e.touches[0].clientX);
-    });
-  });
-
-  document.addEventListener("mousemove", e=>activeBar&&updateSlide(e.clientX));
-  document.addEventListener("touchmove", e=>activeBar&&updateSlide(e.touches[0].clientX));
-
-  document.addEventListener("mouseup", stopSlide);
-  document.addEventListener("touchend", stopSlide);
-}
-
-function updateSlide(x){
-  let rect=activeBar.getBoundingClientRect();
-  let percent=((x-rect.left)/rect.width)*100;
-  percent=Math.max(0,Math.min(100,percent));
-
-  data[activeKey]={value:Math.round(percent),time:Date.now()};
-  activeBar.querySelector(".fill").style.width=percent+"%";
-}
-
-function stopSlide(){
-  if(activeBar){ save(); activeBar=null; activeKey=null; }
-}
-
-// 💬 CHAT
+// CHAT
 function sendMsg(){
   let t=document.getElementById("chatInput").value;
   if(!t) return;
@@ -293,12 +256,23 @@ function sendMsg(){
 function renderChat(){
   let html="";
   appData.chat.forEach(m=>{
-    html+=`<div class="msg ${m.user===user?'me':'other'}">${m.text}<br><small>${m.time}</small></div>`;
+    let cls=m.user===user?"me":"other";
+    if(m.user==="ai") cls="ai";
+
+    html+=`
+    <div class="msg ${cls}">
+      <b>${m.user==="ai"?"🤖 Therapist AI":m.user}</b><br>
+      ${m.text}
+      <small>${m.time}</small>
+    </div>`;
   });
-  document.getElementById("chatBox").innerHTML=html;
+
+  let box=document.getElementById("chatBox");
+  box.innerHTML=html;
+  box.scrollTop=box.scrollHeight;
 }
 
-// 🎵 MUSIC
+// MUSIC
 function getYouTubeId(url){
   if(url.includes("youtu.be/")) return url.split("youtu.be/")[1].split("?")[0];
   if(url.includes("watch?v=")) return url.split("v=")[1].split("&")[0];
@@ -308,23 +282,15 @@ function playMusic(id){
   db.ref("player").set({songId:id,startedAt:Date.now(),by:names[user]});
 }
 
-function renderPlayer(p){
-  let delay=Math.floor((Date.now()-p.startedAt)/1000);
-
-  document.getElementById("globalPlayer").innerHTML=`
-  <div class="playerBox playerMini" id="playerBox">
-    <div style="display:flex;justify-content:space-between;">
-      <small>💖 ${p.by}</small>
-      <span onclick="toggleSize()">⬆️</span>
-    </div>
-    <iframe src="https://www.youtube.com/embed/${p.songId}?autoplay=1&start=${delay}"></iframe>
-  </div>`;
-}
-
-db.ref("player").on("value", snap=>{
+db.ref("player").on("value",snap=>{
   let p=snap.val();
   if(!p) return;
-  renderPlayer(p);
+
+  document.getElementById("globalPlayer").innerHTML=`
+  <div class="playerBox" id="playerBox">
+    <small>${p.by}</small>
+    <iframe src="https://www.youtube.com/embed/${p.songId}?autoplay=1"></iframe>
+  </div>`;
 });
 
 function renderMusic(){
@@ -342,42 +308,11 @@ function renderMusic(){
 }
 
 function addMusic(){
-  let l=document.getElementById("musicInput").value.trim();
+  let l=document.getElementById("musicInput").value;
   if(!l) return;
-
   appData.music.push(l);
   document.getElementById("musicInput").value="";
   save();
-}
-
-// 🔥 DRAG PLAYER
-let player=document.getElementById("globalPlayer");
-let drag=false,offsetX,offsetY;
-
-player.addEventListener("mousedown",startDrag);
-player.addEventListener("touchstart",startDrag);
-
-function startDrag(e){
-  drag=true;
-  let t=e.touches?e.touches[0]:e;
-  offsetX=t.clientX-player.offsetLeft;
-  offsetY=t.clientY-player.offsetTop;
-}
-
-document.addEventListener("mousemove",e=>drag&&move(e.clientX,e.clientY));
-document.addEventListener("touchmove",e=>drag&&move(e.touches[0].clientX,e.touches[0].clientY));
-
-function move(x,y){
-  player.style.left=(x-offsetX)+"px";
-  player.style.top=(y-offsetY)+"px";
-}
-
-document.addEventListener("mouseup",()=>drag=false);
-document.addEventListener("touchend",()=>drag=false);
-
-// 🔥 SIZE
-function toggleSize(){
-  document.getElementById("playerBox").classList.toggle("playerFull");
 }
 
 // RENDER
