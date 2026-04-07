@@ -139,10 +139,14 @@ function renderDashboard(){
 
   let html="";
   let hour=new Date().getHours();
-  let other = user==="you"?"her":"you";
+  let names = {
+  you: "Prashant",
+  her: "Kanika"
+};
 
+let other = user==="you"?"her":"you";
   // 💗 YOU
-  html+=`<div class="card"><h3>💗 What I updated</h3>`;
+  html+=`<div class="card"><h3>💗 ${names[user]}</h3>`;
 
   for(let k in appData[user]){
     if(k==="freaky" && !(hour>=23 || hour<6)) continue;
@@ -165,7 +169,7 @@ function renderDashboard(){
   html+=`</div>`;
 
   // 💖 HER
-  html+=`<div class="card"><h3>💖 What ${other} updated</h3>`;
+  html+=`<div class="card"><h3>💖 ${names[other]}</h3>`;
 
   for(let k in appData[other]){
     if(k==="freaky" && !(hour>=23 || hour<6)) continue;
