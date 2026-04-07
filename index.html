@@ -125,9 +125,13 @@ iframe{
 
 // FIREBASE
 const firebaseConfig = {
-  apiKey: "AIzaSy...",
+  apiKey: "AIzaSyCsv34rRwtD35qcTl8RMeBwFF5F_azkMg8",
   authDomain: "rating-bar-24a81.firebaseapp.com",
-  databaseURL: "https://rating-bar-24a81-default-rtdb.asia-southeast1.firebasedatabase.app"
+  databaseURL: "https://rating-bar-24a81-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "rating-bar-24a81",
+  storageBucket: "rating-bar-24a81.firebasestorage.app",
+  messagingSenderId: "1017485664370",
+  appId: "1:1017485664370:web:a0b43f4426238a61ce22eb"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -196,59 +200,66 @@ function renderDashboard(){
 
 // 🔥 SLIDER ENGINE (REAL FIX)
 
-      let isSliding = false;
+      let activeBar = null;
+let activeKey = null;
 
 function enableSliding(){
 
   document.querySelectorAll(".bar").forEach(bar=>{
     let key = bar.dataset.key;
 
-    const move = (x)=>{
-      if(!isSliding) return;
+    const update = (clientX)=>{
+      if(!activeBar) return;
 
-      let rect = bar.getBoundingClientRect();
-      let percent = ((x - rect.left) / rect.width) * 100;
+      let rect = activeBar.getBoundingClientRect();
+      let percent = ((clientX - rect.left) / rect.width) * 100;
 
       percent = Math.max(0, Math.min(100, percent));
 
-      data[key] = Math.round(percent);
+      data[activeKey] = Math.round(percent);
 
-      // 🔥 update UI instantly (no jump)
-      bar.querySelector(".fill").style.width = percent + "%";
+      activeBar.querySelector(".fill").style.width = percent + "%";
     };
 
-    bar.addEventListener("touchstart", e=>{
-      isSliding = true;
-      move(e.touches[0].clientX);
-    });
-
+    // START
     bar.addEventListener("mousedown", e=>{
-      isSliding = true;
-      move(e.clientX);
+      activeBar = bar;
+      activeKey = key;
+      update(e.clientX);
     });
 
-    document.addEventListener("touchmove", e=>{
-      if(isSliding) move(e.touches[0].clientX);
+    bar.addEventListener("touchstart", e=>{
+      activeBar = bar;
+      activeKey = key;
+      update(e.touches[0].clientX);
     });
 
-    document.addEventListener("mousemove", e=>{
-      if(isSliding) move(e.clientX);
-    });
+  });
 
-    document.addEventListener("touchend", ()=>{
-      if(isSliding){
-        isSliding = false;
-        save(); // 🔥 save ONLY after release
-      }
-    });
+  // MOVE
+  document.addEventListener("mousemove", e=>{
+    if(activeBar) update(e.clientX);
+  });
 
-    document.addEventListener("mouseup", ()=>{
-      if(isSliding){
-        isSliding = false;
-        save(); // 🔥 save ONLY after release
-      }
-    });
+  document.addEventListener("touchmove", e=>{
+    if(activeBar) update(e.touches[0].clientX);
+  });
 
+  // END
+  document.addEventListener("mouseup", ()=>{
+    if(activeBar){
+      save();
+      activeBar = null;
+      activeKey = null;
+    }
+  });
+
+  document.addEventListener("touchend", ()=>{
+    if(activeBar){
+      save();
+      activeBar = null;
+      activeKey = null;
+    }
   });
 }
 
@@ -332,41 +343,39 @@ function renderMemories(){
 }
 
 // MUSIC
-function addMusic(){
-  let l=document.getElementById("musicInput").value;
-  if(!l) return;
-
-  appData.music.push(l);
-  document.getElementById("musicInput").value="";
-  save();
-}
 function renderMusic(){
   let html="";
 
   appData.music.forEach(l=>{
 
-    let id = "";
+    let id="";
 
+    // youtu.be link
     if(l.includes("youtu.be/")){
       id = l.split("youtu.be/")[1].split("?")[0];
     }
+
+    // normal youtube
     else if(l.includes("watch?v=")){
       id = l.split("v=")[1].split("&")[0];
     }
-    else if(l.includes("playlist")){
-      let pid = l.split("list=")[1];
-      html+=`<iframe src="https://www.youtube.com/embed/videoseries?list=${pid}"></iframe>`;
+
+    // playlist
+    else if(l.includes("list=")){
+      let pid = l.split("list=")[1].split("&")[0];
+      html += `<iframe src="https://www.youtube.com/embed/videoseries?list=${pid}"></iframe>`;
       return;
     }
 
     if(id){
-      html+=`<iframe src="https://www.youtube.com/embed/${id}"></iframe>`;
+      html += `<iframe src="https://www.youtube.com/embed/${id}"></iframe>`;
     }
 
   });
 
-  document.getElementById("musicList").innerHTML=html;
+  document.getElementById("musicList").innerHTML = html;
 }
+
 // RENDER
 function renderAll(){
   renderDashboard();
