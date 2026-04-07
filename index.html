@@ -14,11 +14,7 @@ body{
   font-family:-apple-system;
   background:linear-gradient(135deg,#ffe4ec,#ffd6e0);
 }
-.nav{
-  display:flex;
-  justify-content:space-around;
-  padding:10px;
-}
+.nav{display:flex;justify-content:space-around;padding:10px;}
 .section{display:none;padding:15px;}
 .section.active{display:block;}
 
@@ -34,7 +30,6 @@ body{
   background:#eee;
   border-radius:20px;
   margin-top:6px;
-  position:relative;
   overflow:hidden;
 }
 
@@ -42,7 +37,6 @@ body{
   height:100%;
   background:linear-gradient(90deg,#ff6fa5,#ff2e75);
   border-radius:20px;
-  width:0%;
   transition:width 0.2s;
 }
 
@@ -63,47 +57,27 @@ button{
   color:white;
 }
 
-.msg{
-  padding:8px;
-  border-radius:10px;
-  margin:5px;
-  max-width:70%;
-}
+.msg{padding:8px;border-radius:10px;margin:5px;max-width:70%;}
 .me{background:#ff4d88;color:white;margin-left:auto;}
 .other{background:white;}
 
-iframe{
-  width:100%;
-  height:200px;
-  border-radius:10px;
-}
+iframe{width:100%;height:200px;border-radius:10px;}
+small{font-size:10px;color:#666;}
 </style>
 </head>
 
 <body>
 
-<!-- 🔥 GLOBAL PLAYER (FIXED) -->
-<div id="globalPlayer" style="
-position:fixed;
-bottom:10px;
-left:10px;
-right:10px;
-z-index:999;
-"></div>
+<div id="globalPlayer" style="position:fixed;bottom:10px;left:10px;right:10px;z-index:999;"></div>
 
 <div class="nav">
   <div onclick="show('dashboard')">💗</div>
   <div onclick="show('chat')">💬</div>
-  <div onclick="show('tasks')">🎯</div>
-  <div onclick="show('memories')">📸</div>
   <div onclick="show('music')">🎵</div>
 </div>
 
 <div id="dashboard" class="section active">
-  <div class="card">
-    <h3 id="userTitle"></h3>
-    <div id="bars"></div>
-  </div>
+  <div id="bars"></div>
 </div>
 
 <div id="chat" class="section">
@@ -112,21 +86,8 @@ z-index:999;
   <button onclick="sendMsg()">Send</button>
 </div>
 
-<div id="tasks" class="section">
-  <input id="taskInput">
-  <button onclick="addTask()">Add</button>
-  <div id="taskList"></div>
-</div>
-
-<div id="memories" class="section">
-  <input type="file" id="imgInput">
-  <textarea id="noteInput"></textarea>
-  <button onclick="saveMemory()">Save</button>
-  <div id="memoryList"></div>
-</div>
-
 <div id="music" class="section">
-  <input id="musicInput" placeholder="YouTube link">
+  <input id="musicInput">
   <button onclick="addMusic()">Add</button>
   <div id="musicList"></div>
 </div>
@@ -138,15 +99,11 @@ const firebaseConfig = {
   apiKey: "AIzaSyCsv34rRwtD35qcTl8RMeBwFF5F_azkMg8",
   authDomain: "rating-bar-24a81.firebaseapp.com",
   databaseURL: "https://rating-bar-24a81-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "rating-bar-24a81",
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// USER
 let user=new URLSearchParams(location.search).get("user")||"you";
-
 let appData={}, data={};
 
 const labels={
@@ -157,24 +114,18 @@ const labels={
 // 🔥 LIVE SYNC
 db.ref("appData").on("value", snap=>{
   appData = snap.val() || {
-    you:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
-    her:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
-    chat:[],tasks:[],memories:[],music:[]
+    you:{}, her:{}, chat:[], music:[]
   };
 
   if(!appData.music) appData.music=[];
   if(!appData.chat) appData.chat=[];
-  if(!appData.tasks) appData.tasks=[];
-  if(!appData.memories) appData.memories=[];
 
   data = appData[user];
   renderAll();
 });
 
 // SAVE
-function save(){
-  db.ref("appData").set(appData);
-}
+function save(){ db.ref("appData").set(appData); }
 
 // NAV
 function show(id){
@@ -182,46 +133,73 @@ function show(id){
   document.getElementById(id).classList.add("active");
 }
 
-// DASHBOARD
+// 💗 DASHBOARD (WITH TIMESTAMP + 2 SECTIONS)
 function renderDashboard(){
-  document.getElementById("userTitle").innerText="💗 "+user;
 
   let html="";
   let hour=new Date().getHours();
+  let other = user==="you"?"her":"you";
 
-  for(let k in data){
+  // 💗 YOU
+  html+=`<div class="card"><h3>💗 What I updated</h3>`;
 
+  for(let k in appData[user]){
     if(k==="freaky" && !(hour>=23 || hour<6)) continue;
 
+    let val = appData[user][k]?.value ?? appData[user][k];
+    let time = appData[user][k]?.time;
+
     html+=`
-    <div style="margin-top:15px;">
-      <div style="display:flex;justify-content:space-between;">
-        <span>${labels[k]}</span>
-        <span>${data[k]}%</span>
-      </div>
+    <div>
+      <span>${labels[k]}</span>
+      <span>${val}%</span>
+      ${time?`<small>${new Date(time).toLocaleTimeString()}</small>`:""}
 
       <div class="bar" data-key="${k}">
-        <div class="fill" style="width:${data[k]}%"></div>
+        <div class="fill" style="width:${val}%"></div>
       </div>
     </div>`;
   }
+
+  html+=`</div>`;
+
+  // 💖 HER
+  html+=`<div class="card"><h3>💖 What ${other} updated</h3>`;
+
+  for(let k in appData[other]){
+    if(k==="freaky" && !(hour>=23 || hour<6)) continue;
+
+    let val = appData[other][k]?.value ?? appData[other][k];
+    let time = appData[other][k]?.time;
+
+    html+=`
+    <div>
+      <span>${labels[k]}</span>
+      <span>${val}%</span>
+      ${time?`<small>${new Date(time).toLocaleTimeString()}</small>`:""}
+
+      <div class="bar">
+        <div class="fill" style="width:${val}%"></div>
+      </div>
+    </div>`;
+  }
+
+  html+=`</div>`;
 
   document.getElementById("bars").innerHTML=html;
   enableSliding();
 }
 
-// 🔥 SLIDER FIX (ONLY ACTIVE BAR)
+// 🔥 SLIDER WITH TIMESTAMP
 let activeBar=null, activeKey=null;
 
 function enableSliding(){
-
-  document.querySelectorAll(".bar").forEach(bar=>{
+  document.querySelectorAll(".bar[data-key]").forEach(bar=>{
     bar.addEventListener("mousedown", e=>{
       activeBar=bar;
       activeKey=bar.dataset.key;
       updateSlide(e.clientX);
     });
-
     bar.addEventListener("touchstart", e=>{
       activeBar=bar;
       activeKey=bar.dataset.key;
@@ -229,13 +207,8 @@ function enableSliding(){
     });
   });
 
-  document.addEventListener("mousemove", e=>{
-    if(activeBar) updateSlide(e.clientX);
-  });
-
-  document.addEventListener("touchmove", e=>{
-    if(activeBar) updateSlide(e.touches[0].clientX);
-  });
+  document.addEventListener("mousemove", e=>activeBar && updateSlide(e.clientX));
+  document.addEventListener("touchmove", e=>activeBar && updateSlide(e.touches[0].clientX));
 
   document.addEventListener("mouseup", stopSlide);
   document.addEventListener("touchend", stopSlide);
@@ -246,16 +219,12 @@ function updateSlide(x){
   let percent=((x-rect.left)/rect.width)*100;
   percent=Math.max(0,Math.min(100,percent));
 
-  data[activeKey]=Math.round(percent);
+  data[activeKey]={ value:Math.round(percent), time:Date.now() };
   activeBar.querySelector(".fill").style.width=percent+"%";
 }
 
 function stopSlide(){
-  if(activeBar){
-    save();
-    activeBar=null;
-    activeKey=null;
-  }
+  if(activeBar){ save(); activeBar=null; activeKey=null; }
 }
 
 // CHAT
@@ -271,75 +240,50 @@ function sendMsg(){
 function renderChat(){
   let html="";
   appData.chat.forEach(m=>{
-    html+=`<div class="msg ${m.user===user?'me':'other'}">
-    ${m.text}<br><small>${m.time}</small></div>`;
+    html+=`<div class="msg ${m.user===user?'me':'other'}">${m.text}<br><small>${m.time}</small></div>`;
   });
   document.getElementById("chatBox").innerHTML=html;
 }
 
-// MUSIC ID FIX
+// MUSIC
 function getYouTubeId(url){
-  if(url.includes("youtu.be/")){
-    return url.split("youtu.be/")[1].split("?")[0];
-  }
-  if(url.includes("watch?v=")){
-    return url.split("v=")[1].split("&")[0];
-  }
-  return null;
+  if(url.includes("youtu.be/")) return url.split("youtu.be/")[1].split("?")[0];
+  if(url.includes("watch?v=")) return url.split("v=")[1].split("&")[0];
 }
 
-// 🔥 SYNC PLAY
 function playMusic(id){
-  db.ref("player").set({
-    songId:id,
-    startedAt:Date.now(),
-    by:user
-  });
+  db.ref("player").set({songId:id,startedAt:Date.now(),by:user});
 }
 
-// 🔥 LISTEN SYNC
 db.ref("player").on("value", snap=>{
   let p=snap.val();
   if(!p) return;
-
   let delay=Math.floor((Date.now()-p.startedAt)/1000);
 
   document.getElementById("globalPlayer").innerHTML=`
     <div class="card">
-      <div style="font-size:12px;">💖 ${p.by} is listening...</div>
+      <small>💖 ${p.by} is listening</small>
       <iframe src="https://www.youtube.com/embed/${p.songId}?autoplay=1&start=${delay}"></iframe>
-    </div>
-  `;
+    </div>`;
 });
 
-// MUSIC UI
 function renderMusic(){
   let html="";
-
-  appData.music.forEach((l,i)=>{
+  appData.music.forEach(l=>{
     let id=getYouTubeId(l);
     if(!id) return;
 
-    let thumb=`https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-
-    html+=`
-    <div class="card" style="display:flex;gap:10px;">
-      <img src="${thumb}" style="width:80px;border-radius:10px;">
-      <div style="flex:1;">
-        🎵 Song
-      </div>
+    html+=`<div class="card">
+      🎵 Song
       <button onclick="playMusic('${id}')">▶️</button>
     </div>`;
   });
-
   document.getElementById("musicList").innerHTML=html;
 }
 
-// ADD MUSIC
 function addMusic(){
   let l=document.getElementById("musicInput").value.trim();
   if(!l) return;
-
   appData.music.push(l);
   document.getElementById("musicInput").value="";
   save();
