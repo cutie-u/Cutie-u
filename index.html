@@ -1,5 +1,131 @@
-<script>
+Update in this and give whole
 
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>💗 Relationship OS</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:-apple-system;
+  background:linear-gradient(135deg,#ffe4ec,#ffd6e0);
+  padding-bottom:140px;
+}
+
+/* NAV */
+.nav{display:flex;justify-content:space-around;padding:10px;}
+
+/* SECTIONS */
+.section{display:none;padding:15px;}
+.section.active{display:block;}
+
+/* CARD */
+.card{
+  background:rgba(255,255,255,0.5);
+  padding:15px;
+  border-radius:15px;
+  margin-top:10px;
+}
+
+/* BAR */
+.bar{
+  height:14px;
+  background:#eee;
+  border-radius:20px;
+  margin-top:6px;
+  overflow:hidden;
+}
+.fill{
+  height:100%;
+  background:linear-gradient(90deg,#ff6fa5,#ff2e75);
+  border-radius:20px;
+  transition:width 0.15s;
+}
+
+/* INPUT */
+input{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  margin-top:5px;
+}
+
+/* BUTTON */
+button{
+  margin-top:8px;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  background:#ff4d88;
+  color:white;
+}
+
+/* CHAT */
+.msg{padding:8px;border-radius:10px;margin:5px;max-width:70%;}
+.me{background:#ff4d88;color:white;margin-left:auto;}
+.other{background:white;}
+
+small{font-size:10px;color:#666;}
+
+/* 🔥 FLOATING PLAYER */
+#globalPlayer{
+  position:fixed;
+  bottom:80px;
+  left:10px;
+  width:220px;
+  z-index:9999;
+}
+
+.playerBox{
+  background:rgba(255,255,255,0.8);
+  backdrop-filter:blur(15px);
+  border-radius:20px;
+  padding:10px;
+}
+
+.playerMini iframe{height:100px;}
+.playerFull{
+  width:90vw !important;
+  left:5vw !important;
+}
+.playerFull iframe{height:200px;}
+</style>
+</head>
+
+<body>
+
+<div id="globalPlayer"></div>
+
+<div class="nav">
+  <div onclick="show('dashboard')">💗</div>
+  <div onclick="show('chat')">💬</div>
+  <div onclick="show('music')">🎵</div>
+</div>
+
+<div id="dashboard" class="section active">
+  <div id="bars"></div>
+</div>
+
+<div id="chat" class="section">
+  <div id="chatBox"></div>
+  <input id="chatInput">
+  <button onclick="sendMsg()">Send</button>
+</div>
+
+<div id="music" class="section">
+  <input id="musicInput">
+  <button onclick="addMusic()">Add</button>
+  <div id="musicList"></div>
+</div>
+
+<script>
 // 🔥 FIREBASE
 const firebaseConfig = {
   apiKey: "AIza...",
