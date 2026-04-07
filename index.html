@@ -154,6 +154,12 @@ db.ref("appData").on("value", snap=>{
     her:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
     chat:[],tasks:[],memories:[],music:[]
   };
+   // 🔥 FIX
+  if(!appData.music) appData.music = [];
+  if(!appData.chat) appData.chat = [];
+  if(!appData.tasks) appData.tasks = [];
+  if(!appData.memories) appData.memories = [];
+  
   data = appData[user];
   renderAll();
 });
@@ -347,15 +353,18 @@ function addMusic(){
   let l = document.getElementById("musicInput").value.trim();
 
   if(!l){
-    alert("Enter link bro");
+    alert("Enter link");
     return;
+  }
+
+  if(!appData.music){
+    appData.music = [];
   }
 
   appData.music.push(l);
 
-  document.getElementById("musicInput").value="";
+  document.getElementById("musicInput").value = "";
 
-  renderMusic(); // 🔥 force UI update
   save();
 }
 
