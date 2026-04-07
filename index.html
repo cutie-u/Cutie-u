@@ -26,6 +26,7 @@ body{
   background:rgba(255,255,255,0.5);
   padding:15px;
   border-radius:15px;
+  margin-top:10px;
 }
 
 .bar{
@@ -81,6 +82,15 @@ iframe{
 
 <body>
 
+<!-- 🔥 GLOBAL PLAYER (FIXED) -->
+<div id="globalPlayer" style="
+position:fixed;
+bottom:10px;
+left:10px;
+right:10px;
+z-index:999;
+"></div>
+
 <div class="nav">
   <div onclick="show('dashboard')">💗</div>
   <div onclick="show('chat')">💬</div>
@@ -116,7 +126,7 @@ iframe{
 </div>
 
 <div id="music" class="section">
-  <input id="musicInput">
+  <input id="musicInput" placeholder="YouTube link">
   <button onclick="addMusic()">Add</button>
   <div id="musicList"></div>
 </div>
@@ -129,9 +139,6 @@ const firebaseConfig = {
   authDomain: "rating-bar-24a81.firebaseapp.com",
   databaseURL: "https://rating-bar-24a81-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "rating-bar-24a81",
-  storageBucket: "rating-bar-24a81.firebasestorage.app",
-  messagingSenderId: "1017485664370",
-  appId: "1:1017485664370:web:a0b43f4426238a61ce22eb"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -147,19 +154,19 @@ const labels={
   angry:"Angry",miss:"Miss",freaky:"Freaky"
 };
 
-// LIVE SYNC
+// 🔥 LIVE SYNC
 db.ref("appData").on("value", snap=>{
   appData = snap.val() || {
     you:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
     her:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
     chat:[],tasks:[],memories:[],music:[]
   };
-   // 🔥 FIX
-  if(!appData.music) appData.music = [];
-  if(!appData.chat) appData.chat = [];
-  if(!appData.tasks) appData.tasks = [];
-  if(!appData.memories) appData.memories = [];
-  
+
+  if(!appData.music) appData.music=[];
+  if(!appData.chat) appData.chat=[];
+  if(!appData.tasks) appData.tasks=[];
+  if(!appData.memories) appData.memories=[];
+
   data = appData[user];
   renderAll();
 });
@@ -175,7 +182,7 @@ function show(id){
   document.getElementById(id).classList.add("active");
 }
 
-// 🔥 DASHBOARD (FINAL FIX)
+// DASHBOARD
 function renderDashboard(){
   document.getElementById("userTitle").innerText="💗 "+user;
 
@@ -200,73 +207,55 @@ function renderDashboard(){
   }
 
   document.getElementById("bars").innerHTML=html;
-
   enableSliding();
 }
 
-// 🔥 SLIDER ENGINE (REAL FIX)
-
-      let activeBar = null;
-let activeKey = null;
+// 🔥 SLIDER FIX (ONLY ACTIVE BAR)
+let activeBar=null, activeKey=null;
 
 function enableSliding(){
 
   document.querySelectorAll(".bar").forEach(bar=>{
-    let key = bar.dataset.key;
-
-    const update = (clientX)=>{
-      if(!activeBar) return;
-
-      let rect = activeBar.getBoundingClientRect();
-      let percent = ((clientX - rect.left) / rect.width) * 100;
-
-      percent = Math.max(0, Math.min(100, percent));
-
-      data[activeKey] = Math.round(percent);
-
-      activeBar.querySelector(".fill").style.width = percent + "%";
-    };
-
-    // START
     bar.addEventListener("mousedown", e=>{
-      activeBar = bar;
-      activeKey = key;
-      update(e.clientX);
+      activeBar=bar;
+      activeKey=bar.dataset.key;
+      updateSlide(e.clientX);
     });
 
     bar.addEventListener("touchstart", e=>{
-      activeBar = bar;
-      activeKey = key;
-      update(e.touches[0].clientX);
+      activeBar=bar;
+      activeKey=bar.dataset.key;
+      updateSlide(e.touches[0].clientX);
     });
-
   });
 
-  // MOVE
   document.addEventListener("mousemove", e=>{
-    if(activeBar) update(e.clientX);
+    if(activeBar) updateSlide(e.clientX);
   });
 
   document.addEventListener("touchmove", e=>{
-    if(activeBar) update(e.touches[0].clientX);
+    if(activeBar) updateSlide(e.touches[0].clientX);
   });
 
-  // END
-  document.addEventListener("mouseup", ()=>{
-    if(activeBar){
-      save();
-      activeBar = null;
-      activeKey = null;
-    }
-  });
+  document.addEventListener("mouseup", stopSlide);
+  document.addEventListener("touchend", stopSlide);
+}
 
-  document.addEventListener("touchend", ()=>{
-    if(activeBar){
-      save();
-      activeBar = null;
-      activeKey = null;
-    }
-  });
+function updateSlide(x){
+  let rect=activeBar.getBoundingClientRect();
+  let percent=((x-rect.left)/rect.width)*100;
+  percent=Math.max(0,Math.min(100,percent));
+
+  data[activeKey]=Math.round(percent);
+  activeBar.querySelector(".fill").style.width=percent+"%";
+}
+
+function stopSlide(){
+  if(activeBar){
+    save();
+    activeBar=null;
+    activeKey=null;
+  }
 }
 
 // CHAT
@@ -274,12 +263,7 @@ function sendMsg(){
   let t=document.getElementById("chatInput").value;
   if(!t) return;
 
-  appData.chat.push({
-    user,
-    text:t,
-    time:new Date().toLocaleTimeString()
-  });
-
+  appData.chat.push({user,text:t,time:new Date().toLocaleTimeString()});
   document.getElementById("chatInput").value="";
   save();
 }
@@ -293,80 +277,7 @@ function renderChat(){
   document.getElementById("chatBox").innerHTML=html;
 }
 
-// TASKS
-function addTask(){
-  let t=document.getElementById("taskInput").value;
-  if(!t) return;
-
-  appData.tasks.push({text:t,done:false});
-  document.getElementById("taskInput").value="";
-  save();
-}
-
-function renderTasks(){
-  let html="";
-  appData.tasks.forEach((t,i)=>{
-    html+=`<div onclick="toggleTask(${i})">
-    ${t.done?"✅":"⬜"} ${t.text}</div>`;
-  });
-  document.getElementById("taskList").innerHTML=html;
-}
-
-function toggleTask(i){
-  appData.tasks[i].done=!appData.tasks[i].done;
-  save();
-}
-
-// MEMORIES
-function saveMemory(){
-  let file=document.getElementById("imgInput").files[0];
-  let note=document.getElementById("noteInput").value;
-
-  if(!file) return;
-
-  let reader=new FileReader();
-  reader.onload=e=>{
-    appData.memories.unshift({
-      img:e.target.result,
-      note,
-      time:new Date().toLocaleString()
-    });
-    save();
-  };
-  reader.readAsDataURL(file);
-}
-
-function renderMemories(){
-  let html="";
-  appData.memories.forEach(m=>{
-    html+=`<div class="card">
-      <img src="${m.img}" style="width:100%">
-      <p>${m.note}</p>
-      <small>${m.time}</small>
-    </div>`;
-  });
-  document.getElementById("memoryList").innerHTML=html;
-}
-
-// MUSIC
-function addMusic(){
-  let l = document.getElementById("musicInput").value.trim();
-
-  if(!l){
-    alert("Enter link");
-    return;
-  }
-
-  if(!appData.music){
-    appData.music = [];
-  }
-
-  appData.music.push(l);
-
-  document.getElementById("musicInput").value = "";
-
-  save();
-}
+// MUSIC ID FIX
 function getYouTubeId(url){
   if(url.includes("youtu.be/")){
     return url.split("youtu.be/")[1].split("?")[0];
@@ -374,52 +285,63 @@ function getYouTubeId(url){
   if(url.includes("watch?v=")){
     return url.split("v=")[1].split("&")[0];
   }
-  if(url.includes("playlist")){
-    return null; // skip for now
-  }
   return null;
 }
 
+// 🔥 SYNC PLAY
+function playMusic(id){
+  db.ref("player").set({
+    songId:id,
+    startedAt:Date.now(),
+    by:user
+  });
+}
+
+// 🔥 LISTEN SYNC
+db.ref("player").on("value", snap=>{
+  let p=snap.val();
+  if(!p) return;
+
+  let delay=Math.floor((Date.now()-p.startedAt)/1000);
+
+  document.getElementById("globalPlayer").innerHTML=`
+    <div class="card">
+      <div style="font-size:12px;">💖 ${p.by} is listening...</div>
+      <iframe src="https://www.youtube.com/embed/${p.songId}?autoplay=1&start=${delay}"></iframe>
+    </div>
+  `;
+});
+
+// MUSIC UI
 function renderMusic(){
   let html="";
 
   appData.music.forEach((l,i)=>{
-    let id = getYouTubeId(l);
-
+    let id=getYouTubeId(l);
     if(!id) return;
 
-    let thumb = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    let thumb=`https://img.youtube.com/vi/${id}/hqdefault.jpg`;
 
-    html += `
-    <div class="card" style="display:flex;gap:10px;align-items:center;">
-      
-      <img src="${thumb}" 
-        style="width:80px;height:80px;border-radius:12px;object-fit:cover;">
-      
+    html+=`
+    <div class="card" style="display:flex;gap:10px;">
+      <img src="${thumb}" style="width:80px;border-radius:10px;">
       <div style="flex:1;">
-        <div style="font-weight:600;">🎵 Song</div>
-        <div style="font-size:12px;opacity:0.7;">Tap to play</div>
+        🎵 Song
       </div>
-
       <button onclick="playMusic('${id}')">▶️</button>
-      <button onclick="removeMusic(${i})">❌</button>
-    </div>
-    `;
+    </div>`;
   });
 
-  html += `<div id="player"></div>`;
-
-  document.getElementById("musicList").innerHTML = html;
-}
-function playMusic(id){
-  document.getElementById("player").innerHTML = `
-    <iframe src="https://www.youtube.com/embed/${id}?autoplay=1"
-    style="width:100%;height:200px;border-radius:12px;"></iframe>
-  `;
+  document.getElementById("musicList").innerHTML=html;
 }
 
-function removeMusic(i){
-  appData.music.splice(i,1);
+// ADD MUSIC
+function addMusic(){
+  let l=document.getElementById("musicInput").value.trim();
+  if(!l) return;
+
+  appData.music.push(l);
+  document.getElementById("musicInput").value="";
   save();
 }
 
@@ -427,8 +349,6 @@ function removeMusic(i){
 function renderAll(){
   renderDashboard();
   renderChat();
-  renderTasks();
-  renderMemories();
   renderMusic();
 }
 
