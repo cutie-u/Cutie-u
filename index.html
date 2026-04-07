@@ -15,15 +15,10 @@ body{
   background:linear-gradient(135deg,#ffe4ec,#ffd6e0);
   padding-bottom:140px;
 }
-
-/* NAV */
 .nav{display:flex;justify-content:space-around;padding:10px;}
-
-/* SECTIONS */
 .section{display:none;padding:15px;}
 .section.active{display:block;}
 
-/* CARD */
 .card{
   background:rgba(255,255,255,0.5);
   padding:15px;
@@ -31,7 +26,6 @@ body{
   margin-top:10px;
 }
 
-/* BAR */
 .bar{
   height:14px;
   background:#eee;
@@ -46,7 +40,6 @@ body{
   transition:width 0.15s;
 }
 
-/* INPUT */
 input{
   width:100%;
   padding:10px;
@@ -55,7 +48,6 @@ input{
   margin-top:5px;
 }
 
-/* BUTTON */
 button{
   margin-top:8px;
   padding:10px;
@@ -65,14 +57,12 @@ button{
   color:white;
 }
 
-/* CHAT */
 .msg{padding:8px;border-radius:10px;margin:5px;max-width:70%;}
 .me{background:#ff4d88;color:white;margin-left:auto;}
 .other{background:white;}
 
 small{font-size:10px;color:#666;}
 
-/* 🔥 FLOATING PLAYER */
 #globalPlayer{
   position:fixed;
   bottom:80px;
@@ -125,11 +115,15 @@ small{font-size:10px;color:#666;}
 
 <script>
 
-// 🔥 FIREBASE
+// 🔥 FIREBASE (YOUR REAL CONFIG)
 const firebaseConfig = {
-  apiKey: "AIza...",
+  apiKey: "AIzaSyCsv34rRwtD35qcTl8RMeBwFF5F_azkMg8",
   authDomain: "rating-bar-24a81.firebaseapp.com",
   databaseURL: "https://rating-bar-24a81-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "rating-bar-24a81",
+  storageBucket: "rating-bar-24a81.firebasestorage.app",
+  messagingSenderId: "1017485664370",
+  appId: "1:1017485664370:web:a0b43f4426238a61ce22eb"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -139,22 +133,37 @@ const db = firebase.database();
 let user=new URLSearchParams(location.search).get("user")||"you";
 let appData={}, data={};
 
-const names={
-  you:"Prashant",
-  her:"Kanika"
-};
+const names={ you:"Prashant", her:"Kanika" };
 
 const labels={
   trust:"Trust",mood:"Mood",love:"Love",
   angry:"Angry",miss:"Miss",freaky:"Freaky"
 };
 
+// 🔥 PRESENCE WRITE
+let presenceRef = db.ref("appData/presence/" + user);
+
+presenceRef.set({
+  online: true,
+  lastSeen: Date.now()
+});
+
+window.addEventListener("beforeunload", ()=>{
+  presenceRef.set({
+    online:false,
+    lastSeen:Date.now()
+  });
+});
+
 // 🔥 LIVE SYNC
 db.ref("appData").on("value", snap=>{
-  appData=snap.val()||{you:{},her:{},chat:[],music:[]};
+  appData=snap.val()||{you:{},her:{},chat:[],music:[],presence:{}};
 
-  if(!appData.music) appData.music=[];
+  if(!appData.you) appData.you={};
+  if(!appData.her) appData.her={};
   if(!appData.chat) appData.chat=[];
+  if(!appData.music) appData.music=[];
+  if(!appData.presence) appData.presence={};
 
   data=appData[user];
   renderAll();
@@ -169,28 +178,39 @@ function show(id){
   document.getElementById(id).classList.add("active");
 }
 
+// 🔥 STATUS
+function showStatus(){
+  let other = user==="you"?"her":"you";
+  let p = appData.presence?.[other];
+
+  if(!p) return "";
+
+  if(p.online) return "🟢 Online";
+
+  return "Last seen: "+new Date(p.lastSeen).toLocaleTimeString();
+}
+
 // 💗 DASHBOARD
 function renderDashboard(){
-
   let html="";
   let other=user==="you"?"her":"you";
-  let hour=new Date().getHours();
 
-  // YOU
-  html+=`<div class="card"><h3>💗 ${names[user]}</h3>`;
-  html+=renderBars(user,true);
-  html+=`</div>`;
+  html+=`<div class="card">
+    <h3>💗 ${names[user]}</h3>
+    ${renderBars(user,true)}
+  </div>`;
 
-  // HER
-  html+=`<div class="card"><h3>💖 ${names[other]}</h3>`;
-  html+=renderBars(other,false);
-  html+=`</div>`;
+  html+=`<div class="card">
+    <h3>💖 ${names[other]}</h3>
+    <small>${showStatus()}</small>
+    ${renderBars(other,false)}
+  </div>`;
 
   document.getElementById("bars").innerHTML=html;
   enableSliding();
 }
 
-function renderBars(person,editable){
+function renderBars(person, editable){
   let html="";
   let hour=new Date().getHours();
 
@@ -198,15 +218,21 @@ function renderBars(person,editable){
 
     if(k==="freaky" && !(hour>=23||hour<6)) continue;
 
-    let val=appData[person][k]?.value ?? 0;
-    let time=appData[person][k]?.time;
+    let raw=appData[person][k];
+    let val=0, time=null;
+
+    if(typeof raw==="object"){
+      val=raw.value??0;
+      time=raw.time;
+    } else {
+      val=raw??0;
+    }
 
     html+=`
     <div>
       <span>${labels[k]}</span>
       <span>${val}%</span>
       ${time?`<small>${new Date(time).toLocaleTimeString()}</small>`:""}
-
       <div class="bar" ${editable?`data-key="${k}"`:""}>
         <div class="fill" style="width:${val}%"></div>
       </div>
@@ -234,8 +260,8 @@ function enableSliding(){
     });
   });
 
-  document.addEventListener("mousemove", e=>activeBar && updateSlide(e.clientX));
-  document.addEventListener("touchmove", e=>activeBar && updateSlide(e.touches[0].clientX));
+  document.addEventListener("mousemove", e=>activeBar&&updateSlide(e.clientX));
+  document.addEventListener("touchmove", e=>activeBar&&updateSlide(e.touches[0].clientX));
 
   document.addEventListener("mouseup", stopSlide);
   document.addEventListener("touchend", stopSlide);
@@ -282,7 +308,6 @@ function playMusic(id){
   db.ref("player").set({songId:id,startedAt:Date.now(),by:names[user]});
 }
 
-// 🔥 PLAYER UI
 function renderPlayer(p){
   let delay=Math.floor((Date.now()-p.startedAt)/1000);
 
@@ -302,7 +327,6 @@ db.ref("player").on("value", snap=>{
   renderPlayer(p);
 });
 
-// 🎵 MUSIC LIST
 function renderMusic(){
   let html="";
   appData.music.forEach(l=>{
@@ -353,8 +377,7 @@ document.addEventListener("touchend",()=>drag=false);
 
 // 🔥 SIZE
 function toggleSize(){
-  let box=document.getElementById("playerBox");
-  box.classList.toggle("playerFull");
+  document.getElementById("playerBox").classList.toggle("playerFull");
 }
 
 // RENDER
