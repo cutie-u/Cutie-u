@@ -1,3 +1,4 @@
+Update in this and give whole
 
 <!DOCTYPE html>
 <html>
@@ -125,6 +126,7 @@ small{font-size:10px;color:#666;}
 </div>
 
 <script>
+
 // 🔥 FIREBASE
 const firebaseConfig = {
   apiKey: "AIza...",
@@ -151,16 +153,10 @@ const labels={
 
 // 🔥 LIVE SYNC
 db.ref("appData").on("value", snap=>{
-  appData=snap.val()||{you:{},her:{},chat:[],music:[],presence:{}};
+  appData=snap.val()||{you:{},her:{},chat:[],music:[]};
 
   if(!appData.music) appData.music=[];
   if(!appData.chat) appData.chat=[];
-  if(!appData.presence){
-    appData.presence={
-      you:{online:false,lastSeen:0},
-      her:{online:false,lastSeen:0}
-    };
-  }
 
   data=appData[user];
   renderAll();
@@ -169,82 +165,26 @@ db.ref("appData").on("value", snap=>{
 // SAVE
 function save(){ db.ref("appData").set(appData); }
 
-// =========================
-// 🔥 PRESENCE SYSTEM
-// =========================
-
-function updatePresence(status){
-
-  if(!appData.presence){
-    appData.presence={
-      you:{online:false,lastSeen:0},
-      her:{online:false,lastSeen:0}
-    };
-  }
-
-  if(status==="online"){
-    appData.presence[user].online=true;
-  }else{
-    appData.presence[user].online=false;
-    appData.presence[user].lastSeen=Date.now();
-  }
-
-  save();
+// NAV
+function show(id){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
 }
 
-// when open
-updatePresence("online");
-
-// tab switch / app minimize
-document.addEventListener("visibilitychange", ()=>{
-  if(document.hidden){
-    updatePresence("offline");
-  }else{
-    updatePresence("online");
-  }
-});
-
-// close tab
-window.addEventListener("beforeunload", ()=>{
-  updatePresence("offline");
-});
-
-// 🔥 SHOW STATUS
-function showStatus(){
-  let other=user==="you"?"her":"you";
-  let p=appData.presence?.[other];
-
-  if(!p) return "";
-
-  if(p.online){
-    return "🟢 Online";
-  }else if(p.lastSeen){
-    let time=new Date(p.lastSeen).toLocaleTimeString();
-    return "Last seen: "+time;
-  }
-  return "";
-}
-
-// =========================
 // 💗 DASHBOARD
-// =========================
-
 function renderDashboard(){
 
   let html="";
   let other=user==="you"?"her":"you";
+  let hour=new Date().getHours();
 
   // YOU
-  html+=`<div class="card">
-    <h3>💗 ${names[user]}</h3>
-  `;
+  html+=`<div class="card"><h3>💗 ${names[user]}</h3>`;
   html+=renderBars(user,true);
   html+=`</div>`;
 
-  // HER + STATUS
-  html+=`<div class="card">
-    <h3>💖 ${names[other]} <small>${showStatus()}</small></h3>
-  `;
+  // HER
+  html+=`<div class="card"><h3>💖 ${names[other]}</h3>`;
   html+=renderBars(other,false);
   html+=`</div>`;
 
@@ -278,10 +218,7 @@ function renderBars(person,editable){
   return html;
 }
 
-// =========================
 // 🔥 SLIDER
-// =========================
-
 let activeBar=null, activeKey=null;
 
 function enableSliding(){
@@ -319,10 +256,7 @@ function stopSlide(){
   if(activeBar){ save(); activeBar=null; activeKey=null; }
 }
 
-// =========================
 // 💬 CHAT
-// =========================
-
 function sendMsg(){
   let t=document.getElementById("chatInput").value;
   if(!t) return;
@@ -340,10 +274,7 @@ function renderChat(){
   document.getElementById("chatBox").innerHTML=html;
 }
 
-// =========================
-// 🎵 MUSIC (SYNC)
-// =========================
-
+// 🎵 MUSIC
 function getYouTubeId(url){
   if(url.includes("youtu.be/")) return url.split("youtu.be/")[1].split("?")[0];
   if(url.includes("watch?v=")) return url.split("v=")[1].split("&")[0];
@@ -353,6 +284,7 @@ function playMusic(id){
   db.ref("player").set({songId:id,startedAt:Date.now(),by:names[user]});
 }
 
+// 🔥 PLAYER UI
 function renderPlayer(p){
   let delay=Math.floor((Date.now()-p.startedAt)/1000);
 
@@ -372,7 +304,7 @@ db.ref("player").on("value", snap=>{
   renderPlayer(p);
 });
 
-// MUSIC LIST
+// 🎵 MUSIC LIST
 function renderMusic(){
   let html="";
   appData.music.forEach(l=>{
@@ -396,10 +328,7 @@ function addMusic(){
   save();
 }
 
-// =========================
 // 🔥 DRAG PLAYER
-// =========================
-
 let player=document.getElementById("globalPlayer");
 let drag=false,offsetX,offsetY;
 
@@ -424,7 +353,7 @@ function move(x,y){
 document.addEventListener("mouseup",()=>drag=false);
 document.addEventListener("touchend",()=>drag=false);
 
-// SIZE
+// 🔥 SIZE
 function toggleSize(){
   let box=document.getElementById("playerBox");
   box.classList.toggle("playerFull");
@@ -438,3 +367,6 @@ function renderAll(){
 }
 
 </script>
+
+</body>
+</html>
