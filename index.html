@@ -8,344 +8,158 @@
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
-  transition: all 0.25s ease;
 }
 
 body {
   margin: 0;
   font-family: -apple-system, sans-serif;
   background: linear-gradient(135deg,#ffe4ec,#ffd6e0);
-  overflow-x: hidden;
+  color: #222;
 }
 
-/* TOP */
-.topbar {
-  display:flex;
-  justify-content:space-between;
-  padding:15px;
-  font-weight:600;
+/* HEADER */
+.header {
+  padding: 25px 20px 10px;
 }
 
-/* SIDEBAR */
-.sidebar {
-  position: fixed;
-  right:-260px;
-  top:0;
-  width:250px;
-  height:100%;
-  background: rgba(255,255,255,0.7);
-  backdrop-filter: blur(20px);
-  padding:20px;
-  transition:0.35s;
+.header h1 {
+  margin: 0;
+  font-size: 28px;
 }
-.sidebar.active { right:0; }
 
-/* CONTAINER */
-.container { padding:15px; }
-
-/* SECTIONS */
-.section {
-  transform: translateX(100%);
-  opacity:0;
-  position:absolute;
-  width:100%;
-}
-.section.active {
-  transform: translateX(0);
-  opacity:1;
-  position:relative;
+.header p {
+  margin: 4px 0 0;
+  opacity: 0.6;
 }
 
 /* CARD */
 .card {
+  margin: 15px;
+  padding: 15px;
+  border-radius: 20px;
   background: rgba(255,255,255,0.5);
   backdrop-filter: blur(15px);
-  border-radius:20px;
-  padding:15px;
-  margin:12px 0;
-  box-shadow:0 10px 30px rgba(0,0,0,0.08);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
 /* BAR */
 .bar {
+  height: 14px;
+  border-radius: 20px;
   background: rgba(255,255,255,0.6);
-  height:16px;
-  border-radius:20px;
+  overflow: hidden;
 }
+
 .fill {
-  height:100%;
-  border-radius:20px;
-  background: linear-gradient(90deg,#ff8fab,#ff4d88);
+  height: 100%;
+  border-radius: 20px;
+  background: linear-gradient(90deg,#ff6fa5,#ff2e75);
+  box-shadow: 0 4px 12px rgba(255,80,120,0.4);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: 0.6s ease;
+}
+
+/* LABEL */
+.row {
+  display:flex;
+  justify-content:space-between;
+  font-size:14px;
+  margin-top:12px;
+}
+
+/* FADE */
+.fade {
+  animation: fadeIn 0.6s ease;
+}
+
+@keyframes fadeIn {
+  from {opacity:0; transform: translateY(10px);}
+  to {opacity:1; transform: translateY(0);}
 }
 
 /* BUTTON */
 button {
   background: linear-gradient(135deg,#ff8fab,#ff4d88);
-  border:none;
-  padding:10px;
-  border-radius:14px;
-  color:white;
+  border: none;
+  padding: 10px;
+  border-radius: 12px;
+  color: white;
+  margin-top: 10px;
 }
 
 /* INPUT */
-input, textarea {
-  width:100%;
-  padding:10px;
-  border-radius:12px;
-  border:none;
-  margin:5px 0;
-}
-
-/* CHAT */
-.chat {
-  max-width:70%;
-  padding:10px;
-  border-radius:15px;
-  margin:6px;
-}
-.me { background:#ff8fab;color:white;margin-left:auto; }
-.other { background:white; }
-
-/* MUSIC */
-iframe {
-  border-radius:15px;
-  width:100%;
-  height:200px;
+input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 12px;
+  border: none;
+  margin-top: 10px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="topbar">
-  <div>💗</div>
-  <div onclick="toggleMenu()">⋮</div>
+<div class="header">
+  <h1 id="userTitle">💗 you</h1>
+  <p>Your current vibe</p>
 </div>
 
-<div class="sidebar" id="sidebar">
-  <div onclick="show('dashboard')">Dashboard</div>
-  <div onclick="show('chat')">Chat</div>
-  <div onclick="show('tasks')">Tasks</div>
-  <div onclick="show('memories')">Memories</div>
-  <div onclick="show('music')">Music</div>
-</div>
-
-<div class="container">
-
-<div id="dashboard" class="section active">
-  <h2 id="userTitle"></h2>
+<div class="card fade">
   <div id="bars"></div>
-  <div class="bar"><div id="overallBar" class="fill"></div></div>
-  <p id="reaction"></p>
-</div>
-
-<div id="chat" class="section">
-  <div id="chatBox"></div>
-  <input id="chatInput">
-  <button onclick="sendMsg()">Send</button>
-</div>
-
-<div id="tasks" class="section">
-  <input id="taskInput">
-  <button onclick="addTask()">Add</button>
-  <div id="taskList"></div>
-</div>
-
-<div id="memories" class="section">
-  <input type="file" id="imgInput">
-  <textarea id="noteInput"></textarea>
-  <button onclick="saveMemory()">Save</button>
-  <div id="memoryList"></div>
-</div>
-
-<div id="music" class="section">
-  <input id="musicInput">
-  <button onclick="addMusic()">Add</button>
-  <div id="musicList"></div>
-</div>
-
 </div>
 
 <script>
 
-// HAPTIC
-function haptic(type="light"){
-  if(navigator.vibrate){
-    if(type==="heavy") navigator.vibrate(30);
-    else navigator.vibrate(10);
-  }
-}
-
 // USER
-let user=new URLSearchParams(location.search).get("user")||"you";
+let user = new URLSearchParams(location.search).get("user") || "you";
 
 // DATA
-let appData=JSON.parse(localStorage.getItem("appData"))||{
+let appData = JSON.parse(localStorage.getItem("appData")) || {
   you:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
-  her:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
-  chat:[],tasks:[],memories:[],music:[]
+  her:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30}
 };
 
-let data=appData[user];
+let data = appData[user];
 
-const labels={
-  trust:"Trust",mood:"Mood",love:"Love",
-  angry:"Angry",miss:"Miss",freaky:"Freaky"
+const labels = {
+  trust:"Trust",
+  mood:"Mood",
+  love:"Love",
+  angry:"Angry",
+  miss:"Miss",
+  freaky:"Freaky"
 };
-
-// MENU
-function toggleMenu(){
-  haptic();
-  document.getElementById("sidebar").classList.toggle("active");
-}
-
-function show(id){
-  haptic();
-  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
-  setTimeout(()=>document.getElementById(id).classList.add("active"),100);
-  toggleMenu();
-}
-
-// SAVE
-function save(){
-  appData[user]=data;
-  localStorage.setItem("appData",JSON.stringify(appData));
-  renderAll();
-}
-
-// DASHBOARD
-function renderDashboard(){
-  document.getElementById("userTitle").innerText=user;
-
-  let html="",total=0,count=0;
-  for(let k in data){
-    total+=data[k];count++;
-    html+=`<div>${labels[k]} ${data[k]}%</div>
-    <div class="bar"><div class="fill" style="width:${data[k]}%"></div></div>`;
-  }
-
-  document.getElementById("bars").innerHTML=html;
-  document.getElementById("overallBar").style.width=(total/count)+"%";
-
-  let r="";
-  if(data.angry>70) r="You messed up 😶";
-  else if(data.love>70) r="Good job 💗";
-  document.getElementById("reaction").innerText=r;
-}
-
-// CHAT
-function sendMsg(){
-  haptic("heavy");
-  let t=document.getElementById("chatInput").value;
-  appData.chat.push({user,text:t,time:new Date().toLocaleTimeString()});
-  save();
-}
-
-function renderChat(){
-  let html="";
-  appData.chat.forEach(m=>{
-    html+=`<div class="chat ${m.user===user?'me':'other'}">
-    ${m.text}<br><small>${m.time}</small></div>`;
-  });
-  document.getElementById("chatBox").innerHTML=html;
-}
-
-// TASKS
-function addTask(){
-  haptic();
-  let t=document.getElementById("taskInput").value;
-  appData.tasks.push({text:t,done:false});
-  save();
-}
-
-function toggleTask(i){
-  haptic("heavy");
-  let t=appData.tasks[i];
-  t.done=!t.done;
-  if(t.done) data.trust=Math.min(100,data.trust+5);
-  save();
-}
-
-function renderTasks(){
-  let html="";
-  appData.tasks.forEach((t,i)=>{
-    html+=`<div onclick="toggleTask(${i})">
-    ${t.done?"✅":"⬜"} ${t.text}</div>`;
-  });
-  document.getElementById("taskList").innerHTML=html;
-}
-
-// MEMORIES
-function saveMemory(){
-  haptic("heavy");
-  let file=document.getElementById("imgInput").files[0];
-  let note=document.getElementById("noteInput").value;
-
-  let reader=new FileReader();
-  reader.onload=e=>{
-    appData.memories.unshift({
-      img:e.target.result,
-      note,
-      time:new Date().toLocaleString(),
-      pinned:false
-    });
-    save();
-  };
-  reader.readAsDataURL(file);
-}
-
-function renderMemories(){
-  let html="";
-  appData.memories.forEach((m,i)=>{
-    html+=`
-    <div class="card">
-      <img src="${m.img}" style="width:100%">
-      <p>${m.note}</p>
-      <small>${m.time}</small>
-      <button onclick="togglePin(${i})">📌</button>
-    </div>`;
-  });
-  document.getElementById("memoryList").innerHTML=html;
-}
-
-function togglePin(i){
-  haptic();
-  appData.memories[i].pinned=!appData.memories[i].pinned;
-  save();
-}
-
-// MUSIC
-function addMusic(){
-  haptic();
-  let l=document.getElementById("musicInput").value;
-  appData.music.push(l);
-  save();
-}
-
-function renderMusic(){
-  let html="";
-  appData.music.forEach(l=>{
-    if(l.includes("playlist")){
-      let id=l.split("list=")[1];
-      html+=`<iframe src="https://www.youtube.com/embed/videoseries?list=${id}"></iframe>`;
-    } else if(l.includes("watch?v=")){
-      let id=l.split("v=")[1];
-      html+=`<iframe src="https://www.youtube.com/embed/${id}"></iframe>`;
-    }
-  });
-  document.getElementById("musicList").innerHTML=html;
-}
 
 // RENDER
-function renderAll(){
-  renderDashboard();
-  renderChat();
-  renderTasks();
-  renderMemories();
-  renderMusic();
+function render() {
+  document.getElementById("userTitle").innerText = "💗 " + user;
+
+  let html = "";
+
+  for (let k in data) {
+    html += `
+    <div class="row">
+      <span>${labels[k]}</span>
+      <span>${data[k]}%</span>
+    </div>
+    <div class="bar">
+      <div class="fill" style="width:${data[k]}%"></div>
+    </div>`;
+  }
+
+  document.getElementById("bars").innerHTML = html;
+
+  // animation trigger
+  setTimeout(()=>{
+    document.querySelectorAll(".fill").forEach(el=>{
+      el.style.transform="scaleX(1)";
+    });
+  },100);
 }
 
-renderAll();
+render();
 
 </script>
 
