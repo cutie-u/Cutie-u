@@ -10,19 +10,38 @@ body {
   background: #ffe4ec;
   text-align: center;
   padding: 20px;
+  transition: 0.5s;
 }
+
 .bar {
   background: #ffd1dc;
   border-radius: 20px;
   margin: 8px 0;
   height: 20px;
+  overflow: hidden;
 }
+
 .fill {
   height: 100%;
   background: #ff8fab;
+  box-shadow: 0 0 10px rgba(255, 143, 171, 0.6);
 }
-input {
-  width: 60px;
+
+input, textarea {
+  width: 80%;
+  margin: 5px;
+  padding: 5px;
+  border-radius: 8px;
+  border: none;
+}
+
+button {
+  background: #ff8fab;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 10px;
+  margin-top: 10px;
 }
 </style>
 </head>
@@ -37,6 +56,11 @@ input {
 <div class="bar"><div id="overallBar" class="fill"></div></div>
 <p id="overallText"></p>
 
+<h3>💌 Message</h3>
+<p id="messageText">...</p>
+
+<p id="lastUpdated"></p>
+
 <div id="admin" style="display:none;"></div>
 
 <script>
@@ -49,6 +73,9 @@ let data = JSON.parse(localStorage.getItem("bars")) || {
   miss: 40,
   freaky: 30
 };
+
+let message = localStorage.getItem("message") || "No message yet...";
+let lastUpdated = localStorage.getItem("time") || "Never";
 
 const labels = {
   trust: "Trust 🤍",
@@ -66,17 +93,33 @@ function render() {
   let adminHTML = "";
   let total = 0, count = 0;
 
+  let hour = new Date().getHours();
+
   for (let key in data) {
+
+    // 🔥 Auto logic
+    if (key === "angry" && data[key] > 70) {
+      data.trust = Math.max(0, data.trust - 10);
+    }
+
     total += data[key];
     count++;
 
-    html += `
-      <div>${labels[key]} (${data[key]}%)</div>
-      <div class="bar"><div class="fill" style="width:${data[key]}%"></div></div>
-    `;
+    // 🔒 Freaky lock
+    if (key === "freaky" && hour < 20) {
+      html += `<div>Freaky 😏 (Locked 🔒)</div>`;
+    } else {
+      html += `
+        <div>${labels[key]} (${data[key]}%)</div>
+        <div class="bar">
+          <div class="fill" style="width:${data[key]}%"></div>
+        </div>
+      `;
+    }
 
+    // Admin inputs
     if (isAdmin) {
-      adminHTML += `<input id="${key}" type="number" value="${data[key]}"><br>`;
+      adminHTML += `<input id="${key}" type="number" value="${data[key]}" min="0" max="100"><br>`;
     }
   }
 
@@ -86,8 +129,27 @@ function render() {
   document.getElementById("overallBar").style.width = overall + "%";
   document.getElementById("overallText").innerText = overall + "%";
 
+  // 💌 Message
+  document.getElementById("messageText").innerText = message;
+
+  // ⏱ Time
+  document.getElementById("lastUpdated").innerText = "Last updated: " + lastUpdated;
+
+  // 🎨 Mood background
+  if (data.mood > 70) {
+    document.body.style.background = "#ffd6e0";
+  } else if (data.mood < 30) {
+    document.body.style.background = "#e0b0b0";
+  } else {
+    document.body.style.background = "#ffe4ec";
+  }
+
+  // Admin panel
   if (isAdmin) {
-    adminHTML += `<button onclick="update()">Update 💗</button>`;
+    adminHTML += `
+      <textarea id="msgInput" placeholder="Write message...">${message}</textarea><br>
+      <button onclick="update()">Update 💗</button>
+    `;
     document.getElementById("admin").innerHTML = adminHTML;
     document.getElementById("admin").style.display = "block";
   }
@@ -95,9 +157,21 @@ function render() {
 
 function update() {
   for (let key in data) {
-    data[key] = Number(document.getElementById(key).value);
+    let val = document.getElementById(key).value;
+    if (val >= 0 && val <= 100) {
+      data[key] = Number(val);
+    }
   }
+
+  message = document.getElementById("msgInput").value;
+
+  let now = new Date().toLocaleString();
+  lastUpdated = now;
+
   localStorage.setItem("bars", JSON.stringify(data));
+  localStorage.setItem("message", message);
+  localStorage.setItem("time", lastUpdated);
+
   render();
 }
 
