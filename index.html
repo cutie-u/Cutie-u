@@ -367,46 +367,60 @@ function addMusic(){
 
   save();
 }
+function getYouTubeId(url){
+  if(url.includes("youtu.be/")){
+    return url.split("youtu.be/")[1].split("?")[0];
+  }
+  if(url.includes("watch?v=")){
+    return url.split("v=")[1].split("&")[0];
+  }
+  if(url.includes("playlist")){
+    return null; // skip for now
+  }
+  return null;
+}
 
 function renderMusic(){
   let html="";
 
-  appData.music.forEach(link=>{
+  appData.music.forEach((l,i)=>{
+    let id = getYouTubeId(l);
 
-    try{
-      let url = new URL(link);
-      let id = "";
+    if(!id) return;
 
-      // youtu.be
-      if(url.hostname.includes("youtu.be")){
-        id = url.pathname.replace("/", "");
-      }
+    let thumb = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
 
-      // youtube watch
-      else if(url.hostname.includes("youtube.com")){
-        if(url.searchParams.get("v")){
-          id = url.searchParams.get("v");
-        }
+    html += `
+    <div class="card" style="display:flex;gap:10px;align-items:center;">
+      
+      <img src="${thumb}" 
+        style="width:80px;height:80px;border-radius:12px;object-fit:cover;">
+      
+      <div style="flex:1;">
+        <div style="font-weight:600;">🎵 Song</div>
+        <div style="font-size:12px;opacity:0.7;">Tap to play</div>
+      </div>
 
-        // playlist
-        if(url.searchParams.get("list")){
-          let pid = url.searchParams.get("list");
-          html += `<iframe src="https://www.youtube.com/embed/videoseries?list=${pid}"></iframe>`;
-          return;
-        }
-      }
-
-      if(id){
-        html += `<iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>`;
-      }
-
-    } catch(e){
-      console.log("Invalid link:", link);
-    }
-
+      <button onclick="playMusic('${id}')">▶️</button>
+      <button onclick="removeMusic(${i})">❌</button>
+    </div>
+    `;
   });
 
+  html += `<div id="player"></div>`;
+
   document.getElementById("musicList").innerHTML = html;
+}
+function playMusic(id){
+  document.getElementById("player").innerHTML = `
+    <iframe src="https://www.youtube.com/embed/${id}?autoplay=1"
+    style="width:100%;height:200px;border-radius:12px;"></iframe>
+  `;
+}
+
+function removeMusic(i){
+  appData.music.splice(i,1);
+  save();
 }
 
 // RENDER
