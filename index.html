@@ -2,54 +2,39 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>💗 Her Dashboard</title>
+<title>💗 Relationship OS</title>
 
 <style>
 body {
   font-family: sans-serif;
-  background: #ffe4ec;
   margin: 0;
-  transition: 0.4s;
+  background: #ffe4ec;
 }
 
-/* Top bar */
+/* TOP */
 .topbar {
   display: flex;
   justify-content: space-between;
   padding: 10px;
 }
 
-.menu {
-  font-size: 22px;
-  cursor: pointer;
-}
+.menu { cursor: pointer; font-size: 22px; }
 
-/* Sidebar */
+/* SIDEBAR */
 .sidebar {
   position: fixed;
+  right: -260px;
   top: 0;
-  right: -250px;
   width: 250px;
   height: 100%;
   background: #fff0f5;
   padding: 15px;
   transition: 0.3s;
 }
+.sidebar.active { right: 0; }
 
-.sidebar.active {
-  right: 0;
-}
-
-.sidebar div {
-  margin: 10px 0;
-  cursor: pointer;
-}
-
-/* Content */
-.container {
-  padding: 15px;
-  text-align: center;
-}
+/* CONTENT */
+.container { padding: 15px; text-align: center; }
 
 .bar {
   background: #ffd1dc;
@@ -57,7 +42,6 @@ body {
   height: 20px;
   margin: 8px 0;
 }
-
 .fill {
   height: 100%;
   background: #ff8fab;
@@ -66,7 +50,7 @@ body {
 input, textarea {
   width: 80%;
   margin: 5px;
-  padding: 5px;
+  padding: 6px;
   border-radius: 8px;
   border: none;
 }
@@ -79,11 +63,9 @@ button {
   border: none;
 }
 
-.hidden {
-  display: none;
-}
+.hidden { display: none; }
 
-.memory-card {
+.card {
   background:#fff0f5;
   padding:10px;
   margin:10px;
@@ -100,49 +82,57 @@ button {
 </div>
 
 <div class="sidebar" id="sidebar">
-  <div onclick="showSection('dashboard')">💗 Dashboard</div>
-  <div onclick="showSection('memories')">📸 Memories</div>
-  <div onclick="showSection('plans')">📝 Plans</div>
-  <div onclick="showSection('music')">🎵 Music</div>
-  <div onclick="toggleDark()">🌙 Dark Mode</div>
+  <div onclick="show('dashboard')">💗 Dashboard</div>
+  <div onclick="show('chat')">💬 Chat</div>
+  <div onclick="show('tasks')">🎯 Tasks</div>
+  <div onclick="show('memories')">📸 Memories</div>
+  <div onclick="show('music')">🎵 Music</div>
 </div>
 
 <div class="container">
 
 <!-- DASHBOARD -->
 <div id="dashboard">
-  <h2>Her Dashboard</h2>
+  <h2 id="userTitle"></h2>
   <div id="bars"></div>
 
   <h3>Overall 💖</h3>
   <div class="bar"><div id="overallBar" class="fill"></div></div>
   <p id="overallText"></p>
+
+  <p id="reaction"></p>
+</div>
+
+<!-- CHAT -->
+<div id="chat" class="hidden">
+  <h2>💬 Chat</h2>
+  <div id="chatBox"></div>
+  <input id="chatInput">
+  <button onclick="sendMsg()">Send</button>
+</div>
+
+<!-- TASKS -->
+<div id="tasks" class="hidden">
+  <h2>🎯 Tasks</h2>
+  <input id="taskInput">
+  <button onclick="addTask()">Add</button>
+  <div id="taskList"></div>
 </div>
 
 <!-- MEMORIES -->
 <div id="memories" class="hidden">
   <h2>📸 Memories</h2>
-
-  <input type="file" id="imgInput" accept="image/*"><br>
-  <textarea id="memoryNote" placeholder="Write something..."></textarea><br>
-  <button onclick="saveMemory()">Save 💗</button>
-
+  <input type="file" id="imgInput"><br>
+  <textarea id="noteInput"></textarea><br>
+  <button onclick="saveMemory()">Save</button>
   <div id="memoryList"></div>
-</div>
-
-<!-- PLANS -->
-<div id="plans" class="hidden">
-  <h2>📝 Plans</h2>
-  <textarea id="planInput"></textarea><br>
-  <button onclick="savePlan()">Add</button>
-  <div id="planList"></div>
 </div>
 
 <!-- MUSIC -->
 <div id="music" class="hidden">
   <h2>🎵 Music</h2>
-  <textarea id="musicInput" placeholder="Paste link"></textarea><br>
-  <button onclick="saveMusic()">Add</button>
+  <input id="musicInput">
+  <button onclick="addMusic()">Add</button>
   <div id="musicList"></div>
 </div>
 
@@ -150,142 +140,175 @@ button {
 
 <script>
 
-// DATA
-let data = JSON.parse(localStorage.getItem("bars")) || {
-  trust: 50, mood: 50, love: 50, angry: 20, miss: 40, freaky: 30
+// USER
+let user = new URLSearchParams(location.search).get("user") || "you";
+
+// STORAGE
+let appData = JSON.parse(localStorage.getItem("appData")) || {
+  you:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
+  her:{trust:50,mood:50,love:50,angry:20,miss:40,freaky:30},
+  chat:[], tasks:[], memories:[], music:[]
 };
 
-let memories = JSON.parse(localStorage.getItem("memories")) || [];
-let plans = JSON.parse(localStorage.getItem("plans")) || [];
-let music = JSON.parse(localStorage.getItem("music")) || [];
+let data = appData[user];
 
 const labels = {
-  trust: "Trust 🤍",
-  mood: "Mood 😊",
-  love: "Love 💕",
-  angry: "Angry 😤",
-  miss: "Miss 🥺",
-  freaky: "Freaky 😏"
+  trust:"Trust 🤍", mood:"Mood 😊", love:"Love 💕",
+  angry:"Angry 😤", miss:"Miss 🥺", freaky:"Freaky 😏"
 };
 
 // MENU
-function toggleMenu() {
+function toggleMenu(){
   document.getElementById("sidebar").classList.toggle("active");
 }
 
-function showSection(id) {
-  ["dashboard","memories","plans","music"].forEach(s=>{
+function show(id){
+  ["dashboard","chat","tasks","memories","music"].forEach(s=>{
     document.getElementById(s).classList.add("hidden");
   });
   document.getElementById(id).classList.remove("hidden");
   toggleMenu();
 }
 
-// DARK MODE
-function toggleDark() {
-  document.body.style.background =
-    document.body.style.background === "black" ? "#ffe4ec" : "black";
+// SAVE
+function save(){
+  appData[user]=data;
+  localStorage.setItem("appData",JSON.stringify(appData));
+  renderAll();
 }
 
 // DASHBOARD
-function render() {
-  let html = "";
-  let total = 0, count = 0;
+function renderDashboard(){
+  document.getElementById("userTitle").innerText = user.toUpperCase();
 
-  for (let key in data) {
-    total += data[key];
-    count++;
+  let html="",total=0,count=0;
 
-    html += `
-      <div>${labels[key]} (${data[key]}%)</div>
-      <div class="bar">
-        <div class="fill" style="width:${data[key]}%"></div>
-      </div>
-    `;
+  for(let k in data){
+    total+=data[k]; count++;
+    html+=`<div>${labels[k]} (${data[k]}%)</div>
+    <div class="bar"><div class="fill" style="width:${data[k]}%"></div></div>`;
   }
 
-  document.getElementById("bars").innerHTML = html;
+  document.getElementById("bars").innerHTML=html;
 
-  let overall = Math.round(total / count);
-  document.getElementById("overallBar").style.width = overall + "%";
-  document.getElementById("overallText").innerText = overall + "%";
+  let overall=Math.round(total/count);
+  document.getElementById("overallBar").style.width=overall+"%";
+  document.getElementById("overallText").innerText=overall+"%";
 
-  renderMemories();
-  renderPlans();
-  renderMusic();
+  // SMART REACTION
+  let r="";
+  if(data.angry>70) r="You messed up 😶";
+  else if(data.love>70) r="Good job 💗";
+  else if(data.miss>60) r="She misses you 🥺";
+
+  document.getElementById("reaction").innerText=r;
+}
+
+// CHAT
+function sendMsg(){
+  let text=document.getElementById("chatInput").value;
+  appData.chat.push({user,text,time:new Date().toLocaleTimeString()});
+  save();
+}
+
+function renderChat(){
+  let html="";
+  appData.chat.forEach(m=>{
+    html+=`<div style="text-align:${m.user===user?'right':'left'}">
+    ${m.text}<br><small>${m.time}</small></div>`;
+  });
+  document.getElementById("chatBox").innerHTML=html;
+}
+
+// TASKS
+function addTask(){
+  let t=document.getElementById("taskInput").value;
+  appData.tasks.push({text:t,done:false});
+  save();
+}
+
+function toggleTask(i){
+  let t=appData.tasks[i];
+  t.done=!t.done;
+  if(t.done) data.trust=Math.min(100,data.trust+5);
+  save();
+}
+
+function renderTasks(){
+  let html="";
+  appData.tasks.forEach((t,i)=>{
+    html+=`<div onclick="toggleTask(${i})">
+    ${t.done?"✅":"⬜"} ${t.text}</div>`;
+  });
+  document.getElementById("taskList").innerHTML=html;
 }
 
 // MEMORIES
-function saveMemory() {
-  let file = document.getElementById("imgInput").files[0];
-  let note = document.getElementById("memoryNote").value;
+function saveMemory(){
+  let file=document.getElementById("imgInput").files[0];
+  let note=document.getElementById("noteInput").value;
 
-  if (!file) {
-    alert("Select image!");
-    return;
-  }
-
-  let reader = new FileReader();
-
-  reader.onload = function(e) {
-    let now = new Date().toLocaleString();
-
-    let memory = {
-      img: e.target.result,
-      note: note,
-      time: now
-    };
-
-    memories.unshift(memory);
-    localStorage.setItem("memories", JSON.stringify(memories));
-
-    renderMemories();
+  let reader=new FileReader();
+  reader.onload=function(e){
+    appData.memories.unshift({
+      img:e.target.result,
+      note,
+      time:new Date().toLocaleString(),
+      pinned:false
+    });
+    save();
   };
-
   reader.readAsDataURL(file);
 }
 
-function renderMemories() {
-  let html = "";
+function renderMemories(){
+  let sorted=[...appData.memories].sort((a,b)=>b.pinned-a.pinned);
 
-  memories.forEach(m => {
-    html += `
-      <div class="memory-card">
-        <img src="${m.img}" style="width:100%;border-radius:10px;"><br>
-        <b>${m.note || ""}</b><br>
-        <small>${m.time}</small>
-      </div>
-    `;
+  let html="";
+  sorted.forEach((m,i)=>{
+    html+=`
+    <div class="card">
+      <img src="${m.img}" style="width:100%">
+      <b>${m.note}</b><br>
+      <small>${m.time}</small><br>
+      <button onclick="togglePin(${i})">📌</button>
+    </div>`;
   });
 
-  document.getElementById("memoryList").innerHTML = html;
+  document.getElementById("memoryList").innerHTML=html;
 }
 
-// PLANS
-function savePlan() {
-  let val = document.getElementById("planInput").value;
-  plans.push(val);
-  localStorage.setItem("plans", JSON.stringify(plans));
-  renderPlans();
-}
-
-function renderPlans() {
-  document.getElementById("planList").innerHTML = plans.join("<br>");
+function togglePin(i){
+  appData.memories[i].pinned=!appData.memories[i].pinned;
+  save();
 }
 
 // MUSIC
-function saveMusic() {
-  let val = document.getElementById("musicInput").value;
-  music.push(val);
-  localStorage.setItem("music", JSON.stringify(music));
+function addMusic(){
+  let link=document.getElementById("musicInput").value;
+  appData.music.push(link);
+  save();
+}
+
+function renderMusic(){
+  let html="";
+  appData.music.forEach(l=>{
+    html+=`<iframe width="100%" height="80"
+    src="${l.replace("watch?v=","embed/")}"></iframe>`;
+  });
+  document.getElementById("musicList").innerHTML=html;
+}
+
+// RENDER ALL
+function renderAll(){
+  renderDashboard();
+  renderChat();
+  renderTasks();
+  renderMemories();
   renderMusic();
 }
 
-function renderMusic() {
-  document.getElementById("musicList").innerHTML = music.join("<br>");
-}
-
-render();
+renderAll();
 
 </script>
 
