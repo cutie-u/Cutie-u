@@ -110,22 +110,31 @@ input,textarea {
 </div>
 
 <!-- MEMORIES -->
-<div id="memories" class="hidden">
-  <h2>📸 Memories</h2>
-  <input type="file" id="imgInput"><br>
-  <textarea id="noteInput"></textarea><br>
-  <button onclick="saveMemory()">Save</button>
-  <div id="memoryList"></div>
-</div>
+function renderMemories() {
+  let html = "";
+
+  appData.memories.forEach(m => {
+    html += `
+    <div class="card">
+      <img src="${m.img}" style="width:100%;border-radius:15px;">
+      <p style="margin:8px 0">${m.note}</p>
+      <small>${m.time}</small>
+    </div>`;
+  });
+
+  document.getElementById("memoryList").innerHTML = html;
+}
 
 <!-- MUSIC -->
 <div id="music" class="hidden">
   <h2>🎵 Music</h2>
-  <input id="musicInput">
-  <button onclick="addMusic()">Add</button>
-  <div id="musicList"></div>
-</div>
 
+  <div class="card">
+    <input id="musicInput" placeholder="Paste YouTube link or playlist">
+    <button onclick="addMusic()">Add</button>
+  </div>
+
+  <div id="musicList"></div>
 </div>
 
 <script>
@@ -279,15 +288,40 @@ function addMusic(){
   appData.music.push(link);
   save();
 }
+function renderMusic() {
+  let html = "";
 
-function renderMusic(){
-  let html="";
-  appData.music.forEach(l=>{
-    html+=`<iframe width="100%" height="80"
-    src="${l.replace("watch?v=","embed/")}"></iframe>`;
+  appData.music.forEach(link => {
+
+    // 🎯 HANDLE PLAYLIST
+    if (link.includes("playlist")) {
+      let id = link.split("list=")[1];
+
+      html += `
+      <div class="card">
+        <iframe width="100%" height="200"
+        src="https://www.youtube.com/embed/videoseries?list=${id}"
+        frameborder="0" allowfullscreen></iframe>
+      </div>`;
+    }
+
+    // 🎯 HANDLE VIDEO
+    else if (link.includes("watch?v=")) {
+      let id = link.split("v=")[1];
+
+      html += `
+      <div class="card">
+        <iframe width="100%" height="200"
+        src="https://www.youtube.com/embed/${id}"
+        frameborder="0" allowfullscreen></iframe>
+      </div>`;
+    }
+
   });
-  document.getElementById("musicList").innerHTML=html;
+
+  document.getElementById("musicList").innerHTML = html;
 }
+
 
 // RENDER ALL
 function renderAll(){
