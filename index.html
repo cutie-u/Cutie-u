@@ -8,25 +8,62 @@
 body {
   font-family: sans-serif;
   background: #ffe4ec;
+  margin: 0;
+  transition: 0.4s;
+}
+
+/* Top bar */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.menu {
+  font-size: 22px;
+  cursor: pointer;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -250px;
+  width: 250px;
+  height: 100%;
+  background: #fff0f5;
+  padding: 15px;
+  transition: 0.3s;
+}
+
+.sidebar.active {
+  right: 0;
+}
+
+.sidebar div {
+  margin: 10px 0;
+  cursor: pointer;
+}
+
+/* Content */
+.container {
+  padding: 15px;
   text-align: center;
-  padding: 20px;
-  transition: 0.5s;
 }
 
 .bar {
   background: #ffd1dc;
   border-radius: 20px;
-  margin: 8px 0;
   height: 20px;
-  overflow: hidden;
+  margin: 8px 0;
 }
 
 .fill {
   height: 100%;
   background: #ff8fab;
-  box-shadow: 0 0 10px rgba(255, 143, 171, 0.6);
 }
 
+/* Inputs */
 input, textarea {
   width: 80%;
   margin: 5px;
@@ -38,44 +75,86 @@ input, textarea {
 button {
   background: #ff8fab;
   color: white;
-  padding: 8px 12px;
-  border: none;
+  padding: 8px;
   border-radius: 10px;
-  margin-top: 10px;
+  border: none;
+}
+
+.hidden {
+  display: none;
 }
 </style>
 </head>
 
 <body>
 
-<h2>💗 Her Dashboard</h2>
+<div class="topbar">
+  <h3>💗</h3>
+  <div class="menu" onclick="toggleMenu()">⋮</div>
+</div>
 
-<div id="bars"></div>
+<div class="sidebar" id="sidebar">
+  <div onclick="showSection('dashboard')">💗 Dashboard</div>
+  <div onclick="showSection('memories')">📸 Memories</div>
+  <div onclick="showSection('plans')">📝 Plans</div>
+  <div onclick="showSection('music')">🎵 Music</div>
+  <div onclick="toggleDark()">🌙 Dark Mode</div>
+</div>
 
-<h3>Overall 💖</h3>
-<div class="bar"><div id="overallBar" class="fill"></div></div>
-<p id="overallText"></p>
+<div class="container">
 
-<h3>💌 Message</h3>
-<p id="messageText">...</p>
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <h2>Her Dashboard</h2>
+  <div id="bars"></div>
 
-<p id="lastUpdated"></p>
+  <h3>Overall 💖</h3>
+  <div class="bar"><div id="overallBar" class="fill"></div></div>
+  <p id="overallText"></p>
 
-<div id="admin" style="display:none;"></div>
+  <p id="messageText"></p>
+  <p id="lastUpdated"></p>
+</div>
+
+<!-- MEMORIES -->
+<div id="memories" class="hidden">
+  <h2>📸 Memories</h2>
+  <textarea id="memoryInput"></textarea><br>
+  <button onclick="saveMemory()">Save</button>
+  <p id="memoryList"></p>
+</div>
+
+<!-- PLANS -->
+<div id="plans" class="hidden">
+  <h2>📝 Plans</h2>
+  <textarea id="planInput"></textarea><br>
+  <button onclick="savePlan()">Add</button>
+  <p id="planList"></p>
+</div>
+
+<!-- MUSIC -->
+<div id="music" class="hidden">
+  <h2>🎵 Music</h2>
+  <textarea id="musicInput" placeholder="Paste song link..."></textarea><br>
+  <button onclick="saveMusic()">Add</button>
+  <p id="musicList"></p>
+</div>
+
+</div>
 
 <script>
 
+// DATA
 let data = JSON.parse(localStorage.getItem("bars")) || {
-  trust: 50,
-  mood: 50,
-  love: 50,
-  angry: 20,
-  miss: 40,
-  freaky: 30
+  trust: 50, mood: 50, love: 50, angry: 20, miss: 40, freaky: 30
 };
 
-let message = localStorage.getItem("message") || "No message yet...";
+let message = localStorage.getItem("message") || "";
 let lastUpdated = localStorage.getItem("time") || "Never";
+
+let memories = JSON.parse(localStorage.getItem("memories")) || [];
+let plans = JSON.parse(localStorage.getItem("plans")) || [];
+let music = JSON.parse(localStorage.getItem("music")) || [];
 
 const labels = {
   trust: "Trust 🤍",
@@ -86,41 +165,40 @@ const labels = {
   freaky: "Freaky 😏"
 };
 
-const isAdmin = new URLSearchParams(location.search).get("key") === "hersecret123";
+// MENU
+function toggleMenu() {
+  document.getElementById("sidebar").classList.toggle("active");
+}
 
+function showSection(id) {
+  ["dashboard","memories","plans","music"].forEach(s=>{
+    document.getElementById(s).classList.add("hidden");
+  });
+  document.getElementById(id).classList.remove("hidden");
+  toggleMenu();
+}
+
+// DARK MODE
+function toggleDark() {
+  document.body.style.background =
+    document.body.style.background === "black" ? "#ffe4ec" : "black";
+}
+
+// DASHBOARD
 function render() {
   let html = "";
-  let adminHTML = "";
   let total = 0, count = 0;
 
-  let hour = new Date().getHours();
-
   for (let key in data) {
-
-    // 🔥 Auto logic
-    if (key === "angry" && data[key] > 70) {
-      data.trust = Math.max(0, data.trust - 10);
-    }
-
     total += data[key];
     count++;
 
-    // 🔒 Freaky lock
-    if (key === "freaky" && hour < 20) {
-      html += `<div>Freaky 😏 (Locked 🔒)</div>`;
-    } else {
-      html += `
-        <div>${labels[key]} (${data[key]}%)</div>
-        <div class="bar">
-          <div class="fill" style="width:${data[key]}%"></div>
-        </div>
-      `;
-    }
-
-    // Admin inputs
-    if (isAdmin) {
-      adminHTML += `<input id="${key}" type="number" value="${data[key]}" min="0" max="100"><br>`;
-    }
+    html += `
+      <div>${labels[key]} (${data[key]}%)</div>
+      <div class="bar">
+        <div class="fill" style="width:${data[key]}%"></div>
+      </div>
+    `;
   }
 
   document.getElementById("bars").innerHTML = html;
@@ -129,49 +207,30 @@ function render() {
   document.getElementById("overallBar").style.width = overall + "%";
   document.getElementById("overallText").innerText = overall + "%";
 
-  // 💌 Message
   document.getElementById("messageText").innerText = message;
+  document.getElementById("lastUpdated").innerText = lastUpdated;
 
-  // ⏱ Time
-  document.getElementById("lastUpdated").innerText = "Last updated: " + lastUpdated;
-
-  // 🎨 Mood background
-  if (data.mood > 70) {
-    document.body.style.background = "#ffd6e0";
-  } else if (data.mood < 30) {
-    document.body.style.background = "#e0b0b0";
-  } else {
-    document.body.style.background = "#ffe4ec";
-  }
-
-  // Admin panel
-  if (isAdmin) {
-    adminHTML += `
-      <textarea id="msgInput" placeholder="Write message...">${message}</textarea><br>
-      <button onclick="update()">Update 💗</button>
-    `;
-    document.getElementById("admin").innerHTML = adminHTML;
-    document.getElementById("admin").style.display = "block";
-  }
+  document.getElementById("memoryList").innerHTML = memories.join("<br>");
+  document.getElementById("planList").innerHTML = plans.join("<br>");
+  document.getElementById("musicList").innerHTML = music.join("<br>");
 }
 
-function update() {
-  for (let key in data) {
-    let val = document.getElementById(key).value;
-    if (val >= 0 && val <= 100) {
-      data[key] = Number(val);
-    }
-  }
+// SAVE FUNCTIONS
+function saveMemory() {
+  memories.push(document.getElementById("memoryInput").value);
+  localStorage.setItem("memories", JSON.stringify(memories));
+  render();
+}
 
-  message = document.getElementById("msgInput").value;
+function savePlan() {
+  plans.push(document.getElementById("planInput").value);
+  localStorage.setItem("plans", JSON.stringify(plans));
+  render();
+}
 
-  let now = new Date().toLocaleString();
-  lastUpdated = now;
-
-  localStorage.setItem("bars", JSON.stringify(data));
-  localStorage.setItem("message", message);
-  localStorage.setItem("time", lastUpdated);
-
+function saveMusic() {
+  music.push(document.getElementById("musicInput").value);
+  localStorage.setItem("music", JSON.stringify(music));
   render();
 }
 
