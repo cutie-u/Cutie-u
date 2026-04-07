@@ -173,8 +173,14 @@ function renderDashboard(){
   document.getElementById("userTitle").innerText="💗 "+user;
 
   let html="";
+  let hour = new Date().getHours();
 
   for(let k in data){
+
+    // 🌙 Hide freaky in daytime
+    if(k === "freaky" && !(hour >= 23 || hour < 6)){
+      continue;
+    }
 
     html += `
     <div style="margin-top:15px;">
@@ -183,7 +189,12 @@ function renderDashboard(){
         <span>${data[k]}%</span>
       </div>
 
-      <div class="bar" onclick="handleBarClick(event, '${k}')">
+      <div class="bar"
+        ontouchstart="startSlide(event,'${k}')"
+        ontouchmove="moveSlide(event,'${k}')"
+        onmousedown="startSlide(event,'${k}')"
+        onmousemove="moveSlide(event,'${k}')">
+
         <div class="fill" style="width:${data[k]}%"></div>
       </div>
     </div>`;
@@ -222,6 +233,33 @@ function handleBarClick(e, key){
   data[key] = Math.round(percent);
   save();
 }
+let slidingKey = null;
+
+function startSlide(e, key){
+  slidingKey = key;
+  updateSlide(e, key);
+}
+
+function moveSlide(e, key){
+  if(slidingKey !== key) return;
+  updateSlide(e, key);
+}
+
+function updateSlide(e, key){
+  let touch = e.touches ? e.touches[0] : e;
+
+  let rect = e.currentTarget.getBoundingClientRect();
+  let percent = ((touch.clientX - rect.left) / rect.width) * 100;
+
+  percent = Math.max(0, Math.min(100, percent));
+
+  data[key] = Math.round(percent);
+  save();
+}
+
+// stop sliding
+document.addEventListener("mouseup", ()=> slidingKey=null);
+document.addEventListener("touchend", ()=> slidingKey=null);
 
 // CHAT
 function sendMsg(){
