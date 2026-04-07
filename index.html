@@ -5,11 +5,6 @@
 
 <title>💗 Relationship OS</title>
 
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#ff4d88">
-<link rel="apple-touch-icon" href="icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -26,21 +21,30 @@ body{
 }
 .section{display:none;padding:15px;}
 .section.active{display:block;}
+
 .card{
   background:rgba(255,255,255,0.5);
   padding:15px;
   border-radius:15px;
-  margin-bottom:10px;
 }
-.bar{height:12px;background:#eee;border-radius:20px;}
-.fill {
+
+.bar{
+  height:14px;
+  background:#eee;
+  border-radius:20px;
+  margin-top:6px;
+  position:relative;
+  overflow:hidden;
+}
+
+.fill{
   height:100%;
   background:linear-gradient(90deg,#ff6fa5,#ff2e75);
   border-radius:20px;
-  transform:scaleX(0);
-  transform-origin:left;
-  transition:0.6s;
+  width:0%;
+  transition:width 0.2s;
 }
+
 input,textarea{
   width:100%;
   padding:10px;
@@ -48,6 +52,7 @@ input,textarea{
   border-radius:10px;
   margin-top:5px;
 }
+
 button{
   margin-top:8px;
   padding:10px;
@@ -56,6 +61,7 @@ button{
   background:#ff4d88;
   color:white;
 }
+
 .msg{
   padding:8px;
   border-radius:10px;
@@ -64,15 +70,10 @@ button{
 }
 .me{background:#ff4d88;color:white;margin-left:auto;}
 .other{background:white;}
-iframe{width:100%;height:200px;border-radius:10px;}
-.notify{
-  position:fixed;
-  top:20px;
-  left:50%;
-  transform:translateX(-50%);
-  background:#ff4d88;
-  color:white;
-  padding:10px;
+
+iframe{
+  width:100%;
+  height:200px;
   border-radius:10px;
 }
 </style>
@@ -115,7 +116,7 @@ iframe{width:100%;height:200px;border-radius:10px;}
 </div>
 
 <div id="music" class="section">
-  <input id="musicInput" placeholder="YouTube link">
+  <input id="musicInput">
   <button onclick="addMusic()">Add</button>
   <div id="musicList"></div>
 </div>
@@ -124,13 +125,9 @@ iframe{width:100%;height:200px;border-radius:10px;}
 
 // FIREBASE
 const firebaseConfig = {
-  apiKey: "AIzaSyCsv34rRwtD35qcTl8RMeBwFF5F_azkMg8",
+  apiKey: "AIzaSy...",
   authDomain: "rating-bar-24a81.firebaseapp.com",
-  databaseURL: "https://rating-bar-24a81-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "rating-bar-24a81",
-  storageBucket: "rating-bar-24a81.firebasestorage.app",
-  messagingSenderId: "1017485664370",
-  appId: "1:1017485664370:web:a0b43f4426238a61ce22eb"
+  databaseURL: "https://rating-bar-24a81-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -168,114 +165,87 @@ function show(id){
   document.getElementById(id).classList.add("active");
 }
 
-// 🔥 FIXED DASHBOARD (SLIDERS)
+// 🔥 DASHBOARD (FINAL FIX)
 function renderDashboard(){
   document.getElementById("userTitle").innerText="💗 "+user;
 
   let html="";
-  let hour = new Date().getHours();
+  let hour=new Date().getHours();
 
   for(let k in data){
 
-    // 🌙 Hide freaky in daytime
-    if(k === "freaky" && !(hour >= 23 || hour < 6)){
-      continue;
-    }
+    if(k==="freaky" && !(hour>=23 || hour<6)) continue;
 
-    html += `
+    html+=`
     <div style="margin-top:15px;">
       <div style="display:flex;justify-content:space-between;">
         <span>${labels[k]}</span>
         <span>${data[k]}%</span>
       </div>
 
-      <div class="bar"
-        ontouchmove="moveSlide(event)"
-onmousemove="moveSlide(event)"
-        onmousedown="startSlide(event,'${k}')"
-        onmousemove="moveSlide(event,'${k}')">
-
+      <div class="bar" data-key="${k}">
         <div class="fill" style="width:${data[k]}%"></div>
       </div>
     </div>`;
   }
 
-  document.getElementById("bars").innerHTML = html;
+  document.getElementById("bars").innerHTML=html;
 
-  setTimeout(()=>{
-    document.querySelectorAll(".fill").forEach(el=>{
-      el.style.transform="scaleX(1)";
+  enableSliding();
+}
+
+// 🔥 SLIDER ENGINE (REAL FIX)
+function enableSliding(){
+
+  document.querySelectorAll(".bar").forEach(bar=>{
+    let key = bar.dataset.key;
+
+    const move = (x)=>{
+      let rect = bar.getBoundingClientRect();
+      let percent = ((x - rect.left) / rect.width) * 100;
+
+      percent = Math.max(0, Math.min(100, percent));
+
+      data[key] = Math.round(percent);
+      save();
+    };
+
+    bar.addEventListener("touchstart", e=>{
+      move(e.touches[0].clientX);
+
+      const onMove = e=>move(e.touches[0].clientX);
+      document.addEventListener("touchmove", onMove);
+
+      document.addEventListener("touchend", ()=>{
+        document.removeEventListener("touchmove", onMove);
+      }, {once:true});
     });
-  },100);
-}
-  
-// UPDATE BAR
-function updateBar(key,value){
-  data[key]=parseInt(value);
-  save();
-}
-function handleBarClick(e, key){
 
-  let hour = new Date().getHours();
+    bar.addEventListener("mousedown", e=>{
+      move(e.clientX);
 
-  if(key === "freaky"){
-    if(!(hour >= 23 || hour < 6)){
-      notify("🌙 Freaky only at night");
-      return;
-    }
-  }
+      const onMove = e=>move(e.clientX);
+      document.addEventListener("mousemove", onMove);
 
-  let rect = e.currentTarget.getBoundingClientRect();
-  let percent = ((e.clientX - rect.left) / rect.width) * 100;
+      document.addEventListener("mouseup", ()=>{
+        document.removeEventListener("mousemove", onMove);
+      }, {once:true});
+    });
 
-  percent = Math.max(0, Math.min(100, percent));
-
-  data[key] = Math.round(percent);
-  save();
-}
-let slidingKey = null;
-let currentBar = null;
-
-function startSlide(e, key){
-  slidingKey = key;
-  currentBar = e.currentTarget; // ✅ store correct bar
-  updateSlide(e);
+  });
 }
 
-function moveSlide(e){
-  if(!slidingKey) return;
-  updateSlide(e);
-}
-
-function updateSlide(e){
-  let touch = e.touches ? e.touches[0] : e;
-
-  let rect = currentBar.getBoundingClientRect(); // ✅ FIX
-  let percent = ((touch.clientX - rect.left) / rect.width) * 100;
-
-  percent = Math.max(0, Math.min(100, percent));
-
-  data[slidingKey] = Math.round(percent);
-  save();
-}
-
-// stop sliding
-document.addEventListener("mouseup", ()=>{
-  slidingKey = null;
-  currentBar = null;
-});
-document.addEventListener("touchend", ()=>{
-  slidingKey = null;
-  currentBar = null;
-});
 // CHAT
 function sendMsg(){
   let t=document.getElementById("chatInput").value;
+  if(!t) return;
+
   appData.chat.push({
     user,
     text:t,
     time:new Date().toLocaleTimeString()
   });
+
   document.getElementById("chatInput").value="";
   save();
 }
@@ -284,16 +254,16 @@ function renderChat(){
   let html="";
   appData.chat.forEach(m=>{
     html+=`<div class="msg ${m.user===user?'me':'other'}">
-    ${m.text}<br><small>${m.time||""}</small></div>`;
+    ${m.text}<br><small>${m.time}</small></div>`;
   });
-  let box=document.getElementById("chatBox");
-  box.innerHTML=html;
-  box.scrollTop=box.scrollHeight;
+  document.getElementById("chatBox").innerHTML=html;
 }
 
 // TASKS
 function addTask(){
   let t=document.getElementById("taskInput").value;
+  if(!t) return;
+
   appData.tasks.push({text:t,done:false});
   document.getElementById("taskInput").value="";
   save();
@@ -317,6 +287,8 @@ function toggleTask(i){
 function saveMemory(){
   let file=document.getElementById("imgInput").files[0];
   let note=document.getElementById("noteInput").value;
+
+  if(!file) return;
 
   let reader=new FileReader();
   reader.onload=e=>{
@@ -345,6 +317,8 @@ function renderMemories(){
 // MUSIC
 function addMusic(){
   let l=document.getElementById("musicInput").value;
+  if(!l) return;
+
   appData.music.push(l);
   document.getElementById("musicInput").value="";
   save();
