@@ -6,70 +6,60 @@
 
 <style>
 body {
-  font-family: sans-serif;
+  font-family: -apple-system, sans-serif;
   margin: 0;
-  background: #ffe4ec;
+  background: linear-gradient(135deg,#ffe4ec,#ffd6e0);
+  color: #333;
 }
 
-/* TOP */
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
-}
-
-.menu { cursor: pointer; font-size: 22px; }
-
-/* SIDEBAR */
-.sidebar {
-  position: fixed;
-  right: -260px;
-  top: 0;
-  width: 250px;
-  height: 100%;
-  background: #fff0f5;
-  padding: 15px;
-  transition: 0.3s;
-}
-.sidebar.active { right: 0; }
-
-/* CONTENT */
-.container { padding: 15px; text-align: center; }
-
-.bar {
-  background: #ffd1dc;
-  border-radius: 20px;
-  height: 20px;
-  margin: 8px 0;
-}
-.fill {
-  height: 100%;
-  background: #ff8fab;
-}
-
-input, textarea {
-  width: 80%;
-  margin: 5px;
-  padding: 6px;
-  border-radius: 8px;
-  border: none;
-}
-
-button {
-  background: #ff8fab;
-  color: white;
-  padding: 8px;
-  border-radius: 10px;
-  border: none;
-}
-
-.hidden { display: none; }
-
+/* glass card */
 .card {
-  background:#fff0f5;
+  backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.4);
+  border-radius: 20px;
+  padding: 15px;
+  margin: 15px 0;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+/* top */
+.topbar {
+  display:flex;
+  justify-content:space-between;
+  padding:15px;
+  font-size:18px;
+}
+
+/* bars */
+.bar {
+  background: rgba(255,255,255,0.5);
+  border-radius:20px;
+  height:18px;
+}
+
+.fill {
+  height:100%;
+  border-radius:20px;
+  background: linear-gradient(90deg,#ff8fab,#ff5d8f);
+  transition:0.5s;
+}
+
+/* buttons */
+button {
+  background: linear-gradient(135deg,#ff8fab,#ff5d8f);
+  border:none;
+  padding:10px 15px;
+  border-radius:12px;
+  color:white;
+}
+
+/* inputs */
+input,textarea {
+  width:90%;
   padding:10px;
-  margin:10px;
-  border-radius:10px;
+  border:none;
+  border-radius:12px;
+  margin:5px;
 }
 </style>
 </head>
